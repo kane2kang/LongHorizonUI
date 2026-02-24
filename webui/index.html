@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LongHorizonUI - Robust Long-Horizon Task Automation of GUI Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg1: #eff6ff;
+      --bg2: #f5f3ff;
+      --bg3: #ecfeff;
+      --card: rgba(255, 255, 255, 0.92);
+      --card2: rgba(255, 255, 255, 0.72);
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #6d28d9;
+      --accent2: #2563eb;
+      --border: rgba(2, 6, 23, 0.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #0f172a;
+      background:
+        radial-gradient(900px 520px at 18% 16%, rgba(109,40,217,0.16), transparent 62%),
+        radial-gradient(820px 520px at 82% 18%, rgba(37,99,235,0.14), transparent 62%),
+        radial-gradient(900px 520px at 65% 85%, rgba(6,182,212,0.12), transparent 62%),
+        linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px);
+      background-size: 36px 36px;
+      opacity: 0.25;
+      mask-image: radial-gradient(circle at 20% 10%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0) 72%);
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* 语言切换按钮 */
+    .lang-switch {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      gap: 0;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(2,6,23,0.10);
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+    }
+
+    .lang-btn {
+      padding: 8px 16px;
+      font-size: 0.88em;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, rgba(109,40,217,0.92) 0%, rgba(37,99,235,0.92) 100%);
+      color: white;
+    }
+
+    .lang-btn:hover:not(.active) {
+      background: rgba(109,40,217,0.08);
+    }
+
+    /* 语言控制 */
+    [data-lang-en] { display: none; }
+    [data-lang-zh] { display: unset; }
+    body.lang-en [data-lang-en] { display: unset; }
+    body.lang-en [data-lang-zh] { display: none; }
+
+    /* 块级元素语言控制 */
+    p[data-lang-en], div[data-lang-en], h2[data-lang-en], h3[data-lang-en], span[data-lang-en] { display: none; }
+    p[data-lang-zh], div[data-lang-zh], h2[data-lang-zh], h3[data-lang-zh], span[data-lang-zh] { display: block; }
+    span[data-lang-zh] { display: inline; }
+    body.lang-en p[data-lang-en], body.lang-en div[data-lang-en], body.lang-en h2[data-lang-en], body.lang-en h3[data-lang-en], body.lang-en span[data-lang-en] { display: block; }
+    body.lang-en span[data-lang-en] { display: inline; }
+    body.lang-en p[data-lang-zh], body.lang-en div[data-lang-zh], body.lang-en h2[data-lang-zh], body.lang-en h3[data-lang-zh], body.lang-en span[data-lang-zh] { display: none; }
+
+    header {
+      text-align: center;
+      padding: 72px 20px 34px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid var(--border);
+      color: rgba(15,23,42,0.90);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 26px rgba(2,6,23,0.08);
+    }
+
+    header h1 {
+      font-size: 3.2em;
+      font-weight: 900;
+      margin-bottom: 12px;
+      line-height: 1.12;
+      color: #0b1220;
+      text-shadow: 0 10px 30px rgba(2,6,23,0.10);
+    }
+
+    header .subtitle {
+      font-size: 1.2em;
+      opacity: 0.92;
+      max-width: 980px;
+      margin: 0 auto;
+      color: #0f172a;
+    }
+
+    header .team {
+      font-size: 1.05em;
+      opacity: 0.9;
+      margin-top: 14px;
+      color: #334155;
+    }
+
+    header .authors {
+      margin-top: 12px;
+      opacity: 0.98;
+      font-size: 1.02em;
+      color: #0f172a;
+    }
+
+    .actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: all 0.25s;
+      border: 1px solid var(--border);
+      color: #0f172a;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn.primary {
+      color: white;
+      background: linear-gradient(135deg, rgba(109,40,217,0.92) 0%, rgba(37,99,235,0.92) 100%);
+      border-color: rgba(109,40,217,0.10);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(2,6,23,0.12);
+      background: rgba(255,255,255,0.88);
+    }
+
+    .btn.primary:hover {
+      background: linear-gradient(135deg, rgba(109,40,217,1) 0%, rgba(37,99,235,1) 100%);
+    }
+
+    .section {
+      background: var(--card);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 34px;
+      margin: 22px 0;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.10);
+      border: 1px solid rgba(2,6,23,0.06);
+    }
+
+    .section h2 {
+      color: #4f46e5;
+      font-size: 1.9em;
+      margin-bottom: 16px;
+    }
+
+    .section h3 {
+      color: #111827;
+      font-size: 1.25em;
+      margin: 18px 0 10px;
+    }
+
+    .section p {
+      color: #334155;
+      font-size: 1.05em;
+      line-height: 1.85;
+      margin-bottom: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      border-radius: 14px;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(109,40,217,0.92) 0%, rgba(37,99,235,0.92) 100%);
+      color: white;
+      box-shadow: 0 10px 22px rgba(2,6,23,0.10);
+    }
+
+    .card h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: white;
+    }
+
+    .figure-wrap {
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .figure-wrap img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      display: block;
+    }
+
+    .figure-caption {
+      margin-top: 10px;
+      font-size: 0.95em;
+      color: #475569;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .kpi {
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .kpi .num {
+      font-size: 1.35em;
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .kpi .lab {
+      font-size: 0.95em;
+      color: #475569;
+      margin-top: 4px;
+    }
+
+    .samples-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .sample {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(2,6,23,0.07);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 10px 18px rgba(2,6,23,0.06);
+    }
+
+    .sample img {
+      width: 100%;
+      height: 132px;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+      background: rgba(2,6,23,0.04);
+    }
+
+    .sample .name {
+      margin-top: 8px;
+      color: #334155;
+      font-weight: 800;
+      font-size: 0.95em;
+    }
+
+    .panel {
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .panel .panel-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .panel .panel-title strong {
+      color: #111827;
+      font-size: 1.06em;
+    }
+
+    .panel .panel-desc {
+      color: #475569;
+      font-size: 0.98em;
+      margin: 8px 0 0;
+    }
+
+    .full {
+      margin-top: 14px;
+    }
+
+    .hero {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(2, 6, 23, 0.08);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 14px 32px rgba(2,6,23,0.08);
+    }
+
+    .hero h3 {
+      margin-top: 0;
+    }
+
+    .cite {
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.95em;
+      color: #0f172a;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 14px;
+      align-items: start;
+    }
+
+    .demo-card {
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 18px rgba(2,6,23,0.06);
+    }
+
+    .demo-card h3 {
+      margin: 0 0 10px;
+      color: #111827;
+      font-size: 1.12em;
+    }
+
+    .demo-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      display: block;
+      background: rgba(2,6,23,0.04);
+    }
+
+    #overview .card {
+      background: #dacfe5;
+      color: #0f172a;
+      border: 1px solid rgba(2, 6, 23, 0.08);
+    }
+
+    #overview .card h3 {
+      color: #0f172a;
+    }
+
+    #overview .card p {
+      color: #334155;
+    }
+
+    /* 结果子卡片 */
+    .result-block {
+      background: rgba(2, 6, 23, 0.02);
+      border: 1px solid rgba(2, 6, 23, 0.07);
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 18px;
+    }
+
+    .result-block h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .result-block .result-summary {
+      color: #475569;
+      font-size: 1.0em;
+      line-height: 1.8;
+      margin-bottom: 12px;
+    }
+
+    .highlight-num {
+      color: #4f46e5;
+      font-weight: 800;
+    }
+
+    /* 方法详情列表 */
+    .method-details {
+      margin: 8px 0 4px 0;
+      padding-left: 20px;
+      color: #334155;
+      font-size: 1.0em;
+      line-height: 1.85;
+    }
+
+    .method-details li {
+      margin-bottom: 6px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 20px 24px;
+    }
+
+    footer .small {
+      font-size: 0.92em;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 980px) {
+      header h1 { font-size: 2.4em; }
+      .two-col { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr; }
+      .samples-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .demo-grid { grid-template-columns: 1fr; }
+      .lang-switch { top: 12px; right: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 语言切换 -->
+  <div class="lang-switch">
+    <button class="lang-btn active" id="btn-zh" onclick="switchLang('zh')">中文</button>
+    <button class="lang-btn" id="btn-en" onclick="switchLang('en')">EN</button>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="badge">GUI Agent · Long-Horizon · Robust Execution</div>
+      <h1>LongHorizonUI</h1>
+      <p class="subtitle" data-lang-zh>面向 GUI Agent 长链路任务的统一鲁棒自动化框架</p>
+      <p class="subtitle" data-lang-en>A Unified Framework for Robust Long-Horizon Task Automation of GUI Agent</p>
+
+      <p class="authors">
+        Bin Kang<sup>1,2,3</sup> · Shaoguo Wen<sup>1</sup> · Junle Wang<sup>1</sup> · Shunlong Wu<sup>1</sup> · Zixing Guo<sup>1</sup> · Rui Shao<sup>3</sup> · Zhuotao Tian<sup>3</sup>
+      </p>
+
+      <p class="team">
+        <sup>1</sup>Tencent Turing Lab &nbsp;·&nbsp;
+        <span data-lang-zh><sup>2</sup>中国科学院大学 &nbsp;·&nbsp; <sup>3</sup>深圳市河套学院</span>
+        <span data-lang-en><sup>2</sup>University of Chinese Academy of Sciences &nbsp;·&nbsp; <sup>3</sup>Hetao Institute of Shenzhen</span>
+      </p>
+
+      <div class="actions">
+        <a class="btn primary" href="#overview">
+          <span data-lang-zh>方法概览</span><span data-lang-en>Method</span>
+        </a>
+        <a class="btn" href="#results">
+          <span data-lang-zh>主要结果</span><span data-lang-en>Results</span>
+        </a>
+        <a class="btn" href="#demos">
+          <span data-lang-zh>用例演示</span><span data-lang-en>Demos</span>
+        </a>
+        <a class="btn" href="https://github.com/kane2kang/LongHorizonUI" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </header>
+
+    <!-- ========== 概要 ========== -->
+    <section class="section" id="abstract">
+      <h2 data-lang-zh>概要</h2>
+      <h2 data-lang-en>Abstract</h2>
+
+      <p data-lang-zh>
+        多模态大模型（MLLM）驱动的 GUI Agent 在短任务上表现出色，但面对超过 10–15 步的长链路任务时，感知漂移、定位偏差与决策误差会逐步累积，导致成功率骤降。
+        <strong>LongHorizonUI</strong> 针对这一问题提出了三项核心设计：
+        (1) <strong>增强感知模块</strong>（OCR + 控件检测 + 关键区域模板修复）为每个 UI 元素分配唯一索引，确保跨步状态可追踪；
+        (2) <strong>深度反思决策</strong>，通过结构化的 JSON Schema 强制进行历史验证、目标一致性检查和动作可解释性推理；
+        (3) <strong>补偿式执行器</strong>，基于 Index → Relative → Absolute 三级退化策略完成动作落地，同时持续监控执行进度并在失败时触发回滚。
+        此外，我们还构建了 <strong>LongGUIBench</strong> 基准（371 场景，平均 22.1 步），用于系统评估长链路能力。
+      </p>
+
+      <p data-lang-en>
+        MLLM-driven GUI Agents perform well on short tasks, but when task sequences exceed 10–15 steps, perception drift, localization errors, and decision mistakes accumulate, causing a steep drop in success rate.
+        <strong>LongHorizonUI</strong> addresses this with three key designs:
+        (1) A <strong>Multimodal Enhanced Perceiver</strong> (OCR + icon detection + template repair) that assigns a unique index to each UI element for trackable cross-step state representation;
+        (2) A <strong>Deep Reflection Decider</strong> that enforces history validation, goal-consistency checks, and action-explainability reasoning via a structured JSON Schema;
+        (3) A <strong>Compensating Action Executor</strong> with an Index → Relative → Absolute fallback strategy, continuous progress monitoring, and rollback on failure.
+        We also introduce <strong>LongGUIBench</strong> (371 scenarios, avg. 22.1 steps) for systematic long-horizon evaluation.
+      </p>
+
+      <div class="figure-wrap">
+        <img src="figure/introduce.png" alt="LongHorizonUI introduction" />
+        <div class="figure-caption" data-lang-zh>长链路任务中，现有方法在 10–15 步后成功率急剧下降。LongHorizonUI 通过索引化感知、反思决策与补偿执行的闭环设计，有效延缓了性能衰减。</div>
+        <div class="figure-caption" data-lang-en>In long-horizon tasks, existing methods suffer a steep performance drop beyond 10–15 steps. LongHorizonUI delays this degradation through indexed perception, reflective decision-making, and compensatory execution.</div>
+      </div>
+    </section>
+
+    <!-- ========== 方法概览 ========== -->
+    <section class="section" id="overview">
+      <h2 data-lang-zh>方法概览</h2>
+      <h2 data-lang-en>Method Overview</h2>
+
+      <!-- LongGUIBench -->
+      <h3 data-lang-zh>1) 基准数据集：LongGUIBench</h3>
+      <h3 data-lang-en>1) Benchmark: LongGUIBench</h3>
+
+      <p data-lang-zh>
+        现有 GUI 基准大多侧重短任务（典型 &lt;10 步），难以暴露长链路场景下的误差累积问题。
+        为此，我们构建了 <strong>LongGUIBench</strong>：所有任务至少 15 步（平均 22.1 步），涵盖 15 款通用应用（147 条任务链）和 13 款游戏（207 条高复杂度场景），合计 4508 张截图。
+        数据由 6 位专业测试人员录制，经跨模态对齐和人工去噪后生成标准化中间表示，每步均标注有操作类型、bbox 坐标及 UI 状态元数据。
+      </p>
+
+      <p data-lang-en>
+        Most existing GUI benchmarks focus on short tasks (typically &lt;10 steps) and fail to reveal error accumulation in long-horizon settings.
+        We built <strong>LongGUIBench</strong>: every task requires at least 15 steps (mean 22.1), covering 15 general apps (147 task chains) and 13 games (207 complex scenarios), totaling 4,508 screenshots.
+        Data was recorded by 6 professional testers, then cross-modally aligned and manually cleaned to produce standardized annotations with action type, bbox, and UI metadata per step.
+      </p>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">
+            <strong data-lang-zh>通用应用（General）</strong>
+            <strong data-lang-en>General Apps</strong>
+          </div>
+          <div class="samples-grid">
+            <div class="sample">
+              <img src="data_samples/general/Wechat.png" alt="Wechat" />
+              <div class="name">Wechat</div>
+            </div>
+            <div class="sample">
+              <img src="data_samples/general/Gmail.png" alt="Gmail" />
+              <div class="name">Gmail</div>
+            </div>
+            <div class="sample">
+              <img src="data_samples/general/Youtube.png" alt="Youtube" />
+              <div class="name">Youtube</div>
+            </div>
+          </div>
+          <p class="panel-desc" data-lang-zh>147 条任务链 · 15 款应用 · 平均 19.5 步 · 含多级菜单、实时输入验证等典型交互</p>
+          <p class="panel-desc" data-lang-en>147 task chains · 15 apps · avg. 19.5 steps · multi-level menus, real-time input validation, etc.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <strong data-lang-zh>游戏场景（Game）</strong>
+            <strong data-lang-en>Game Scenarios</strong>
+          </div>
+          <div class="samples-grid">
+            <div class="sample">
+              <img src="data_samples/game/HOK.png" alt="HOK" />
+              <div class="name">HOK</div>
+            </div>
+            <div class="sample">
+              <img src="data_samples/game/Peaceful_Elite.png" alt="Peaceful Elite" />
+              <div class="name">Peaceful Elite</div>
+            </div>
+            <div class="sample">
+              <img src="data_samples/game/DNF.png" alt="DNF" />
+              <div class="name">DNF</div>
+            </div>
+          </div>
+          <p class="panel-desc" data-lang-zh>207 条高复杂度链路 · 13 款游戏 · 平均 23.7 步（最高 37 步）· 覆盖装备管理、活动参与等核心机制</p>
+          <p class="panel-desc" data-lang-en>207 complex chains · 13 games · avg. 23.7 steps (up to 37) · equipment management, event participation, etc.</p>
+        </div>
+      </div>
+
+      <!-- 方法框架 -->
+      <h3 data-lang-zh>2) LongHorizonUI 框架</h3>
+      <h3 data-lang-en>2) LongHorizonUI Framework</h3>
+
+      <div class="hero">
+        <p data-lang-zh>
+          LongHorizonUI 的核心思路是将"语义决策"到"物理执行"之间的不确定性分层处理。
+          首先将屏幕解析为带唯一索引的元素集合，为后续所有环节提供稳定锚点；
+          然后在决策层通过结构化三级反思，确保每一步动作与任务目标一致且可执行；
+          最后在执行层采用多策略坐标映射与实时验证，必要时自动退化或回滚。
+          这一闭环设计使得 10–15 步后常见的性能断崖得到有效推迟。
+        </p>
+        <p data-lang-en>
+          LongHorizonUI addresses the uncertainty gap from semantic decisions to physical execution in a layered manner.
+          It first parses each screen into an indexed element set that serves as a stable anchor for all downstream stages.
+          The decision layer performs structured three-level reflection, ensuring every action is both task-aligned and executable.
+          The execution layer applies multi-strategy coordinate mapping with real-time verification, automatically falling back or rolling back when needed.
+          This closed-loop design effectively delays the performance cliff typically seen after 10–15 steps.
+        </p>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="num">≥ 15 steps</div>
+            <div class="lab" data-lang-zh>LongGUIBench 长链路标准</div>
+            <div class="lab" data-lang-en>LongGUIBench threshold</div>
+          </div>
+          <div class="kpi">
+            <div class="num">Index → Relative → Absolute</div>
+            <div class="lab" data-lang-zh>三级退化执行策略</div>
+            <div class="lab" data-lang-en>Three-stage fallback execution</div>
+          </div>
+          <div class="kpi">
+            <div class="num">Rollback Safety Net</div>
+            <div class="lab" data-lang-zh>失败后回滚恢复机制</div>
+            <div class="lab" data-lang-en>Failure rollback &amp; recovery</div>
+          </div>
+          <div class="kpi">
+            <div class="num">OCR + Icon + Repair</div>
+            <div class="lab" data-lang-zh>多模态增强感知</div>
+            <div class="lab" data-lang-en>Multimodal enhanced perception</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="figure-wrap full">
+        <img src="figure/overview.png" alt="LongHorizonUI framework overview" />
+        <div class="figure-caption" data-lang-zh>框架总览：增强感知模块（MEP）→ 深度反思决策模块（DRD）→ 补偿式执行器（CAE）。</div>
+        <div class="figure-caption" data-lang-en>Framework overview: Multimodal Enhanced Perceiver (MEP) → Deep Reflection Decider (DRD) → Compensating Action Executor (CAE).</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <h3>Multimodal Enhanced Perceiver</h3>
+          <p data-lang-zh>
+            并行运行控件检测器与 OCR 模块，为每个 UI 元素分配唯一空间索引 ID。
+            通过 IoU 语义绑定将图标与对应文字关联，解决"图标+文字"复合控件的歧义。
+            当高优先区域未检出关键元素（如弹窗关闭按钮）时，自动触发模板修复。
+          </p>
+          <p data-lang-en>
+            Runs icon detector and OCR in parallel, assigning a unique spatial index to each UI element.
+            IoU-based semantic binding links icons with their text, resolving ambiguity in composite controls.
+            Template repair activates automatically when critical elements (e.g., pop-up close buttons) are missed in priority regions.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Deep Reflection Decider</h3>
+          <p data-lang-zh>
+            通过严格定义的 JSON Schema 输出（historical_status / import_contents / think / Execute_goal / action），实现三级闭环推理：
+            ① 历史验证——核查 UI 状态转换是否符合预期；
+            ② 目标检查——确认当前关键信息与任务目标一致；
+            ③ 动作可解释推理——要求模型给出定位依据后再执行。
+            执行前还会检查目标元素是否在当前屏幕上、动作语义是否匹配任务描述。
+          </p>
+          <p data-lang-en>
+            Enforces structured JSON Schema output (historical_status / import_contents / think / Execute_goal / action) for three-level closed-loop reasoning:
+            ① History validation — verifies UI state transitions match expectations;
+            ② Target check — confirms key screen info is consistent with the task goal;
+            ③ Explainable reasoning — requires the model to justify its localization before acting.
+            Pre-execution checks also verify the target element is on-screen and action semantics match the task description.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Compensating Action Executor</h3>
+          <p data-lang-zh>
+            执行时按 <strong>Index（元素质心）→ Relative（框内随机采样）→ Absolute（屏幕坐标+抖动）</strong> 优先级依次尝试。
+            每次点击后由 MLLM 验证截图判断是否成功；若全部候选失败，触发局部重规划，仍失败则回滚到上一成功快照继续执行。
+          </p>
+          <p data-lang-en>
+            Execution follows the priority: <strong>Index (element centroid) → Relative (random in-box) → Absolute (screen coords + jitter)</strong>.
+            After each click, the MLLM verifies the post-action screenshot. If all candidates fail, local re-planning is triggered; persistent failure invokes rollback to the last successful snapshot.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 主要结果 ========== -->
+    <section class="section" id="results">
+      <h2 data-lang-zh>主要结果</h2>
+      <h2 data-lang-en>Main Results</h2>
+
+      <p data-lang-zh>
+        我们在自建的 LongGUIBench 以及公开基准上进行了全面实验，验证了 LongHorizonUI 在长链路推理与 UI 元素定位上的有效性。
+      </p>
+      <p data-lang-en>
+        We conducted comprehensive experiments on LongGUIBench and public benchmarks, validating LongHorizonUI's effectiveness in long-horizon reasoning and UI grounding.
+      </p>
+
+      <!-- LongGUIBench 结果 -->
+      <div class="result-block">
+        <h3 data-lang-zh>📊 LongGUIBench 长链路推理</h3>
+        <h3 data-lang-en>📊 LongGUIBench: Long-Horizon Reasoning</h3>
+        <p class="result-summary" data-lang-zh>
+          在 LongGUIBench 上，LongHorizonUI 在通用与游戏两类长链路场景中均大幅领先现有方法，验证了增强感知、深度反思决策与补偿执行三大模块在长链路任务中的协同有效性。
+        </p>
+        <p class="result-summary" data-lang-en>
+          On LongGUIBench, LongHorizonUI significantly outperforms existing methods across both general and game long-horizon scenarios, validating the synergistic effectiveness of the enhanced perception, deep reflection decider, and compensating executor modules.
+        </p>
+        <div class="figure-wrap">
+          <img src="figure/longbench.png" alt="LongGUIBench results" />
+          <div class="figure-caption" data-lang-zh>LongGUIBench 实验结果：LongHorizonUI 在长链路通用与游戏场景中均大幅领先现有方法。</div>
+          <div class="figure-caption" data-lang-en>LongGUIBench results: LongHorizonUI leads across both general and game long-horizon scenarios.</div>
+        </div>
+      </div>
+
+      <!-- ScreenSpot 结果 -->
+      <div class="result-block">
+        <h3 data-lang-zh>🎯 ScreenSpot 元素定位</h3>
+        <h3 data-lang-en>🎯 ScreenSpot: UI Grounding</h3>
+        <p class="result-summary" data-lang-zh>
+          在 ScreenSpot 跨平台定位基准上，LongHorizonUI 超越此前最优方法，在 Mobile、Desktop、Web 三个平台上均表现稳健，尤其在 Icon 类元素定位上优势突出，验证了增强感知模块中 IoU 语义绑定策略的有效性。
+        </p>
+        <p class="result-summary" data-lang-en>
+          On the ScreenSpot cross-platform grounding benchmark, LongHorizonUI surpasses previous state-of-the-art methods, performing robustly across Mobile, Desktop, and Web platforms with particularly strong icon grounding capabilities, validating the effectiveness of the IoU-based semantic binding in our enhanced perceiver.
+        </p>
+        <div class="figure-wrap">
+          <img src="figure/screenspot.png" alt="ScreenSpot results" />
+          <div class="figure-caption" data-lang-zh>ScreenSpot 实验结果：LongHorizonUI 在 Mobile、Desktop、Web 三个平台上均表现稳健，Icon 定位优势突出。</div>
+          <div class="figure-caption" data-lang-en>ScreenSpot results: LongHorizonUI performs robustly across Mobile, Desktop, and Web, with strong icon grounding capabilities.</div>
+        </div>
+      </div>
+
+      <!-- 可视化结果 -->
+      <div class="result-block">
+        <h3 data-lang-zh>🔍 可视化结果</h3>
+        <h3 data-lang-en>🔍 Visualization Results</h3>
+        <p class="result-summary" data-lang-zh>
+          下图展示了 LongHorizonUI 在实际执行过程中各模块的协作效果。可以看到增强感知模块对 UI 元素的精准索引化标注、深度反思决策模块在多步推理中的状态追踪，以及补偿式执行器在遇到定位偏差时的退化恢复过程，直观体现了框架在长链路场景中的鲁棒性。
+        </p>
+        <p class="result-summary" data-lang-en>
+          The figure below illustrates the collaborative effect of each module during actual execution. It shows the precise indexed annotation by the enhanced perceiver, state tracking across multi-step reasoning by the deep reflection decider, and the fallback recovery process of the compensating executor when localization deviations occur, demonstrating the framework's robustness in long-horizon scenarios.
+        </p>
+        <div class="figure-wrap">
+          <img src="figure/test_result.png" alt="Visualization results" />
+          <div class="figure-caption" data-lang-zh>LongHorizonUI 各模块协作的可视化结果展示。</div>
+          <div class="figure-caption" data-lang-en>Visualization of the collaborative execution across LongHorizonUI modules.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 用例演示 ========== -->
+    <section class="section" id="demos">
+      <h2 data-lang-zh>用例演示</h2>
+      <h2 data-lang-en>Case Demos</h2>
+      <p data-lang-zh>以下展示 LongHorizonUI 在通用应用与游戏场景中的执行过程。</p>
+      <p data-lang-en>Below are execution demos of LongHorizonUI in general app and game scenarios.</p>
+      <div class="demo-grid">
+        <div class="demo-card">
+          <h3 data-lang-zh>通用场景</h3>
+          <h3 data-lang-en>General Scenario</h3>
+          <img src="demo/general_scene.gif" alt="General scenario demo" />
+        </div>
+        <div class="demo-card">
+          <h3 data-lang-zh>游戏场景</h3>
+          <h3 data-lang-en>Game Scenario</h3>
+          <img src="demo/game_scene.gif" alt="Game scenario demo" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 引用 ========== -->
+    <section class="section" id="citation">
+      <h2 data-lang-zh>引用</h2>
+      <h2 data-lang-en>Citation</h2>
+      <p data-lang-zh>如果本工作对您有帮助，欢迎引用：</p>
+      <p data-lang-en>If this work is helpful, please consider citing:</p>
+      <pre class="cite">@inproceedings{anonymous2026longhorizonui,
+  title={LongHorizon{UI}: A Unified Framework for Robust long-horizon Task Automation of {GUI} Agent},
+  author={Anonymous},
+  booktitle={The Fourteenth International Conference on Learning Representations},
+  year={2026},
+  url={https://openreview.net/forum?id=BK7Mk5d4WE}
+}</pre>
+    </section>
+
+    <footer>
+      <div class="small">© 2026 LongHorizonUI Team</div>
+      <div class="small"><sup>1</sup>Tencent Turing Lab · <sup>2</sup>University of Chinese Academy of Sciences · <sup>3</sup>Hetao Institute of Shenzhen</div>
+    </footer>
+  </div>
+
+  <script>
+    function switchLang(lang) {
+      if (lang === 'en') {
+        document.body.classList.add('lang-en');
+        document.getElementById('btn-en').classList.add('active');
+        document.getElementById('btn-zh').classList.remove('active');
+        document.documentElement.lang = 'en';
+      } else {
+        document.body.classList.remove('lang-en');
+        document.getElementById('btn-zh').classList.add('active');
+        document.getElementById('btn-en').classList.remove('active');
+        document.documentElement.lang = 'zh-CN';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+av
+adbutils
+pyside6~=6.6.3.1
+setuptools
+numpy==1.26.4
