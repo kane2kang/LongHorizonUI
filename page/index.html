@@ -677,12 +677,12 @@
           <h3>Multimodal Enhanced Perceiver</h3>
           <p data-lang-zh>
             并行运行控件检测器与 OCR 模块，为每个 UI 元素分配唯一空间索引 ID。
-            通过 IoU 语义绑定将图标与对应文字关联，解决"图标+文字"复合控件的歧义。
+            通过 IoU 语义绑定将图标与对应文字关联（阈值 0.8 时效果最优），解决"图标+文字"复合控件的歧义。
             当高优先区域未检出关键元素（如弹窗关闭按钮）时，自动触发模板修复。
           </p>
           <p data-lang-en>
             Runs icon detector and OCR in parallel, assigning a unique spatial index to each UI element.
-            IoU-based semantic binding links icons with their text, resolving ambiguity in composite controls.
+            IoU-based semantic binding links icons with their text (optimal at threshold 0.8), resolving ambiguity in composite controls.
             Template repair activates automatically when critical elements (e.g., pop-up close buttons) are missed in priority regions.
           </p>
         </div>
@@ -708,10 +708,12 @@
           <p data-lang-zh>
             执行时按 <strong>Index（元素质心）→ Relative（框内随机采样）→ Absolute（屏幕坐标+抖动）</strong> 优先级依次尝试。
             每次点击后由 MLLM 验证截图判断是否成功；若全部候选失败，触发局部重规划，仍失败则回滚到上一成功快照继续执行。
+            实验中回滚触发率为 12–19%，其中约 70% 最终恢复成功，仅 &lt;3% 需完全重启。
           </p>
           <p data-lang-en>
             Execution follows the priority: <strong>Index (element centroid) → Relative (random in-box) → Absolute (screen coords + jitter)</strong>.
             After each click, the MLLM verifies the post-action screenshot. If all candidates fail, local re-planning is triggered; persistent failure invokes rollback to the last successful snapshot.
+            In experiments, rollback is triggered in 12–19% of episodes, ~70% recover successfully, and only &lt;3% require a full restart.
           </p>
         </div>
       </div>
@@ -723,10 +725,10 @@
       <h2 data-lang-en>Main Results</h2>
 
       <p data-lang-zh>
-        我们在自建的 LongGUIBench 以及公开基准上进行了全面实验，验证了 LongHorizonUI 在长链路推理与 UI 元素定位上的有效性。
+        我们在自建的 LongGUIBench 以及公开基准（ScreenSpot、AndroidControl、GUI-Odyssey）上进行了全面实验，验证了 LongHorizonUI 在长链路推理、UI 元素定位和跨应用导航三个维度上的优势。
       </p>
       <p data-lang-en>
-        We conducted comprehensive experiments on LongGUIBench and public benchmarks, validating LongHorizonUI's effectiveness in long-horizon reasoning and UI grounding.
+        We conducted comprehensive experiments on LongGUIBench and public benchmarks (ScreenSpot, AndroidControl, GUI-Odyssey), validating LongHorizonUI's advantages in long-horizon reasoning, UI grounding, and cross-app navigation.
       </p>
 
       <!-- LongGUIBench 结果 -->
@@ -734,10 +736,14 @@
         <h3 data-lang-zh>📊 LongGUIBench 长链路推理</h3>
         <h3 data-lang-en>📊 LongGUIBench: Long-Horizon Reasoning</h3>
         <p class="result-summary" data-lang-zh>
-          在 LongGUIBench 上，LongHorizonUI 在通用与游戏两类长链路场景中均大幅领先现有方法，验证了增强感知、深度反思决策与补偿执行三大模块在长链路任务中的协同有效性。
+          在 LongGUIBench 上，LongHorizonUI 达到 <span class="highlight-num">77.3%</span> 的平均成功率，相比最强基线 UI-TARS-1.5 提升显著。
+          通用场景低级指令 SR 达 85.3%，高级指令 SR 达 52.3%（较 UI-TARS-1.5 分别提升 6.1% 和 30.5%）；
+          游戏场景低级 SR 83.9%，高级 SR 52.1%，在所有对比方法中保持领先。
         </p>
         <p class="result-summary" data-lang-en>
-          On LongGUIBench, LongHorizonUI significantly outperforms existing methods across both general and game long-horizon scenarios, validating the synergistic effectiveness of the enhanced perception, deep reflection decider, and compensating executor modules.
+          On LongGUIBench, LongHorizonUI achieves <span class="highlight-num">77.3%</span> average success rate, significantly outperforming the strongest baseline.
+          General-Low SR reaches 85.3%, General-High SR 52.3% (+6.1% and +30.5% over UI-TARS-1.5);
+          Game-Low SR 83.9%, Game-High SR 52.1%, leading across all compared methods.
         </p>
         <div class="figure-wrap">
           <img src="figure/longbench.png" alt="LongGUIBench results" />
@@ -751,10 +757,12 @@
         <h3 data-lang-zh>🎯 ScreenSpot 元素定位</h3>
         <h3 data-lang-en>🎯 ScreenSpot: UI Grounding</h3>
         <p class="result-summary" data-lang-zh>
-          在 ScreenSpot 跨平台定位基准上，LongHorizonUI 超越此前最优方法，在 Mobile、Desktop、Web 三个平台上均表现稳健，尤其在 Icon 类元素定位上优势突出，验证了增强感知模块中 IoU 语义绑定策略的有效性。
+          在 ScreenSpot 跨平台定位基准上，LongHorizonUI 取得 <span class="highlight-num">90.4%</span> 的平均准确率，超越此前最优的 InfiGUI-R1（87.5%）。
+          在 Desktop Icon（81.4%）和 Web Icon（90.9%）等子项上均创下新高，表明增强感知模块的 IoU 语义绑定在图标定位上具有突出优势。
         </p>
         <p class="result-summary" data-lang-en>
-          On the ScreenSpot cross-platform grounding benchmark, LongHorizonUI surpasses previous state-of-the-art methods, performing robustly across Mobile, Desktop, and Web platforms with particularly strong icon grounding capabilities, validating the effectiveness of the IoU-based semantic binding in our enhanced perceiver.
+          On the ScreenSpot cross-platform grounding benchmark, LongHorizonUI achieves <span class="highlight-num">90.4%</span> average accuracy, surpassing the previous best InfiGUI-R1 (87.5%).
+          It sets new records on Desktop Icon (81.4%) and Web Icon (90.9%), demonstrating the strong grounding capability of our IoU-based semantic binding.
         </p>
         <div class="figure-wrap">
           <img src="figure/screenspot.png" alt="ScreenSpot results" />
@@ -763,20 +771,22 @@
         </div>
       </div>
 
-      <!-- 可视化结果 -->
+      <!-- 综合结果 -->
       <div class="result-block">
-        <h3 data-lang-zh>🔍 可视化结果</h3>
-        <h3 data-lang-en>🔍 Visualization Results</h3>
+        <h3 data-lang-zh>🧭 AndroidControl &amp; GUI-Odyssey 导航能力</h3>
+        <h3 data-lang-en>🧭 AndroidControl &amp; GUI-Odyssey: Navigation</h3>
         <p class="result-summary" data-lang-zh>
-          下图展示了 LongHorizonUI 在实际执行过程中各模块的协作效果。可以看到增强感知模块对 UI 元素的精准索引化标注、深度反思决策模块在多步推理中的状态追踪，以及补偿式执行器在遇到定位偏差时的退化恢复过程，直观体现了框架在长链路场景中的鲁棒性。
+          在 AndroidControl 和 GUI-Odyssey 上，LongHorizonUI 同样取得了一致的提升：AndroidControl-High SR 达 54.2%，GUI-Odyssey SR 达 40.5%，整体平均 <span class="highlight-num">65.5%</span>，较强基线 GUI-R1-7B 提升 2.3%。
+          这表明 LongHorizonUI 在增强长链路鲁棒性的同时，并未牺牲短任务的基础交互能力。
         </p>
         <p class="result-summary" data-lang-en>
-          The figure below illustrates the collaborative effect of each module during actual execution. It shows the precise indexed annotation by the enhanced perceiver, state tracking across multi-step reasoning by the deep reflection decider, and the fallback recovery process of the compensating executor when localization deviations occur, demonstrating the framework's robustness in long-horizon scenarios.
+          On AndroidControl and GUI-Odyssey, LongHorizonUI also shows consistent improvements: AndroidControl-High SR 54.2%, GUI-Odyssey SR 40.5%, overall average <span class="highlight-num">65.5%</span>, +2.3% over the strong GUI-R1-7B baseline.
+          This confirms LongHorizonUI improves long-horizon robustness without sacrificing short-task interaction capabilities.
         </p>
         <div class="figure-wrap">
-          <img src="figure/test_result.png" alt="Visualization results" />
-          <div class="figure-caption" data-lang-zh>LongHorizonUI 各模块协作的可视化结果展示。</div>
-          <div class="figure-caption" data-lang-en>Visualization of the collaborative execution across LongHorizonUI modules.</div>
+          <img src="figure/test_result.png" alt="Overall experiment results" />
+          <div class="figure-caption" data-lang-zh>综合实验结果对比。</div>
+          <div class="figure-caption" data-lang-en>Overall experiment results comparison.</div>
         </div>
       </div>
     </section>

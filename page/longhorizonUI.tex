@@ -1,0 +1,857 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2026_conference,times}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+% \usepackage[UTF8]{ctex} % 支持中文
+\usepackage{algorithm, algpseudocode} % 算法描述
+\usepackage{newfloat}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\captionsetup[subfigure]{labelformat=parens,labelsep=space} % 显示为 (a) (b)
+\usepackage{wrapfig}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\newcommand{\mypara}[1]{\vspace{0.4em}\noindent\textbf{#1}\hspace{0.2cm}}
+
+\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\frenchspacing  % DO NOT CHANGE THIS
+\usepackage{amsmath, amssymb, bm} % 数学公式
+\usepackage{algorithm, algpseudocode} % 算法描述
+\usepackage{tabularray} % 表格环境
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[skip=0.5ex]{caption}
+\usepackage[T1]{fontenc} % 字体编码
+
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage[skip=0.5ex]{caption}
+\definecolor{highlight}{RGB}{240,240,240}
+\usepackage{enumitem}
+% \usepackage{ulem}
+\newcommand{\isChecklistMainFile}{}
+\newcommand\kbc[1]{\textcolor{orange}{[\textbf{kangbin}: #1]}}
+\newcommand\ztc[1]{\textcolor{orange}{[\textbf{zttian}: #1]}}
+\newcommand\zta[1]{\textcolor{cyan}{#1}}
+\newcommand\ztr[1]{\textcolor{cyan}{\sout{#1}}}
+\newcommand{\revise}[1]{\textcolor{blue}{#1}}
+
+\title{LongHorizonUI: A Unified Framework for Robust long-horizon Task Automation of GUI Agent}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the \iclrfinalcopy macro remains commented out below.
+% Non-anonymous submissions will be rejected without review.
+
+\author{Antiquus S.~Hippocampus, Natalia Cerebro \& Amelie P. Amygdale \thanks{ Use footnote for providing further information
+about author (webpage, alternative address)---\emph{not} for acknowledging
+funding agencies.  Funding acknowledgements go at the end of the paper.} \\
+Department of Computer Science\\
+Cranberry-Lemon University\\
+Pittsburgh, PA 15213, USA \\
+\texttt{\{hippo,brain,jen\}@cs.cranberry-lemon.edu} \\
+\And
+Ji Q. Ren \& Yevgeny LeNet \\
+Department of Computational Neuroscience \\
+University of the Witwatersrand \\
+Joburg, South Africa \\
+\texttt{\{robot,net\}@wits.ac.za} \\
+\AND
+Coauthor \\
+Affiliation \\
+Address \\
+\texttt{email}
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+
+While multimodal large language models (MLLMs) have shown promise in short-horizon GUI agents, their performance degrades significantly on long-horizon tasks involving complex, dynamic interfaces. To address this, we present LongHorizonUI, a framework designed to enhance the reliability and robustness of MLLM-based agents in extended interactive environments.
+Moreover, we establish a new long-horizon benchmark, named LongGUIBench, encompassing complex general applications and various gaming scenarios. Long-horizon tasks in this benchmark are defined as those requiring more than 15 steps, enabling thorough evaluation of long-horizon reasoning capabilities. Building upon this benchmark, we develop a Multimodal Enhanced Perceiver that integrates element detection and text recognition models, assigning unique indices to interface elements, thereby reinforcing state representation.
+Furthermore, we introduce a Deep-Reflection Decider, which employs a structured multi-level feedback-validation mechanism to support iterative reasoning and guarantee precise action execution along predictable trajectories. Building on the Decider’s outputs, a Compensatory Action Executor continuously monitors execution progress; when degradation is detected, it applies targeted compensation operations or triggers a rollback procedure, thereby maintaining robustness throughout long-horizon tasks. Experiments show that LongHorizonUI substantially improves long-horizon performance on LongGUIBench, while remaining competitive on diverse public benchmarks. The code and models will be publicly available.
+
+
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+
+Graphical user interface (GUI) agents \citep{Hong_2024_CVPR_CogAgent, Wang_2025_Guiagents_Survey, Huang_2025_CVPR, Wang_2025_MobileA3gent, cradle} are increasingly utilized in dynamic interactive environments to automate diverse workflows. The advancement of multimodal large language models (MLLMs) \citep{Liu_2023_NeurIPS_LLaVA, Li_2023_ICML_BLIP2, Lin_2024_CVPR_MoELLaVA, MLLM_Survey_TPAMI} has notably bolstered the capabilities of GUI agents in tackling more intricate scenarios, enabling them not only to handle simple, short-term tasks \citep{Hong_2024_CVPR_CogAgent, Sun_2025_Osgenesis} but also to engage in complex, long-horizon interactions within gaming environments and enterprise applications.
+
+Recent work~\citep{Sun_2025_CVPR, fan2025guibeealignguiaction} has investigated online reinforcement learning to improve adaptability by generating training data through environmental interactions. However, the trial-and-error learning paradigm expands the action space and amplifies cumulative errors over long horizons. Moreover, most of the existing benchmarks~\citep{NEURIPS2024_androidcontrol, 2024_gui_odyssey, chai_2025_amex, NEURIPS2023_bbbb6308} are designed for short-term tasks—typically fewer than 15 steps, as shown in Figure~\ref{fig:steps_nums}, and thus fail to support long-horizon evaluations. Consequently, developing reliable GUI agents in long-horizon tasks remains a significant challenge.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=.98\textwidth]{figure/figure1_intro.pdf} % 将图形宽度设置为文本宽度的98%
+\caption{LongHorizonUI first builds an indexed element set (icons/text) via enhanced perception, next drives the MLLM with a structured prompt to validate history and derive multiple action candidates, and finally applies a three-stage executor (index, relative, absolute) with monitoring. This pipeline sustains reliable execution on sequences exceeding 15 steps.}
+\label{fig:intro}
+\end{figure}
+
+
+
+\mypara{Key Observations.}
+To investigate the challenge of current methods in the long-horizon task scenarios, we conduct experiments by evaluating state-of-the-art methods~\citep{liu2025_infiguir1, qin2025_uitars, zhang2025_agentcpm} on the AndroidControl benchmark~\citep{NEURIPS2024_androidcontrol} across sequences of varying lengths, as shown in Figure~\ref{fig:steps_performance}. Specifically, for sequences with $\leq$5 steps, average success rates exceed 90.0\%. However, performance degrades sharply as sequence length increases. When sequences exceed 10 steps, the average success rate drops below 75\%; for sequences longer than 15 steps, it falls to approximately 60\%.
+
+This non-linear performance degradation clearly indicates that current methods may fail to capture long-horizon state dependencies, allowing errors to accumulate exponentially as sequence length increases. Once the sequence length exceeds a certain threshold, the agent system collapses due to the inability to maintain cross-step contextual consistency.
+To address this issue, we need to answer the question: \textit{how can we design GUI agents that maintain contextual coherence and decision-making proficiency over long-horizon action sequences?}
+
+
+\mypara{Our Solution.}
+In this work, we propose LongHorizonUI, a framework for enhancing the robustness of MLLM-based GUI agents in complex and long-horizon tasks, as shown in Figure \ref{fig:intro}. Specifically, first, we propose a Multimodal Enhanced Perceiver (MEP) that integrates object detection and OCR outputs to capture rich contextual information, assigning indices to UI elements for temporally consistent state representation. Then, we design a Deep Reflection Decider (DRD) that performs structured, multi-level reasoning through formatted prompts, enforcing explicit validation of historical coherence, goal relevance, and action justification to ensure the decision fidelity. Finally, we incorporate a Compensatory Action Executor (CAE) that implements a multi-level fallback strategy by leveraging the element indices, relative layout priors, and absolute screen coordinates. Concurrently, a real-time progress monitor captures screen states and execution outcomes to construct a temporal state chain, enabling reliable rollback and recovery from execution errors.
+
+Moreover, to comprehensively evaluate the performance in long-horizon scenarios, we introduce LongGUIBench, a new benchmark that consists of tasks requiring more than 15 steps across diverse gaming and application scenarios. It comprises 371 scenarios: 207 from 13 games and 147 task chains from 15 apps. Data were collected by professional testers, 6 human experts, via synchronized action–screen recording, followed by cross-modal alignment and standardized parsing. Extensive experiments on both existing benchmarks and the proposed LongGUIBench demonstrate that LongHorizonUI outperforms existing methods by over 3\% in task success rate, without sacrificing the generic performance.
+
+
+
+
+To summarize, our contributions are as follows:
+\begin{itemize}[leftmargin=*,topsep=0pt]
+    \item We propose LongHorizonUI, a GUI agent designed for long-horizon reasoning, enhancing performance by an improved perceiver, a structured deep reflection decider, and a multi-level compensatory action executor.
+    \item We introduce LongGUIBench, a new benchmark for long-horizon GUI interaction comprising diverse complex tasks from multiple application domains requiring more than 15 steps, with expert-annotated state trajectories and goal specifications.
+    \item Extensive experiments on public benchmarks and LongGUIBench demonstrate that LongHorizonUI outperforms state-of-the-art methods in long-horizon tasks while maintaining competitive performance in standard settings, validating its efficacy and generalization capabilities.
+\end{itemize}
+
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.505\columnwidth}
+    \centering
+    \includegraphics[width=\linewidth,keepaspectratio]{figure/figure2_steps_nums.pdf}
+    \caption{Sequence length distribution.}
+    \label{fig:steps_nums}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.455\columnwidth}
+    \centering
+    \includegraphics[width=\linewidth,keepaspectratio]{figure/figure3_steps_performance.pdf}
+    \caption{Effect of length on performance.}
+    \label{fig:steps_performance}
+  \end{subfigure}
+  \caption{(a) Step-length distributions across GUI datasets. LongGUIBench shows markedly longer horizons (Avg: 22.1 steps) compared to GUIOdyssey (13.4), AITW (8.2), and AndroidControl (6.8), emphasizing evaluation beyond short episodes. (b) Success rate vs. sequence length on AndroidControl. All baselines degrade as horizons grow, with sharp drops beyond 10--15 steps; LongHorizonUI (ours) sustains higher SR and delays the critical decline, remaining competitive up to 18 steps.}
+  \label{fig:length_vs_perf}
+  % \vspace{-4pt} % 需要更紧凑可打开
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Our Method}
+In this section, as outlined in Figure~\ref{fig:overview}, we introduce LongHorizonUI, a framework dedicated to long-horizon reasoning for GUI agents. Building upon the LongGUIBench benchmark spanning complex games and general application workflows, our approach integrates three core components: (i) a Multimodal Enhanced Perceiver integrating OCR and icon detection, (ii) a Deep Reflection Decider enabling action verification and adaptive planning, and (iii) a Compensatory Action Executor ensuring robust action execution. The following sections detail each element. The discussion of related work is in the Appendix~\ref{sec:Related} due to the page limit.
+
+
+
+
+\subsection{LongGUIBench}
+\label{sec:LongGUIBench}
+
+In this section, we present LongGUIBench, a benchmark designed for evaluating long-horizon GUI tasks by simulating real-world, dynamic interactive scenarios. The dataset is constructed through synchronized collection of action sequences and screen snapshots, captured by professional testers as they execute predefined test cases across diverse applications and games. All tasks mandate at least 15 steps (mean steps: 22.1). Following cross-modal temporal alignment, the collected action commands and screenshots are input into MLLMs, leveraging structured prompts combined with screen perception algorithms, the MLLMs parse operation descriptions (e.g., ``click the search bar'') and extract semantic control annotations, including button functionalities and bbox coordinates. This process generates a standardized intermediate representation with a key-value structure that includes the global descriptions (\texttt{task\_name}) and decomposed subgoal descriptions (\texttt{task\_steps\{action\_ID, action\_description, action\_type, bbox, image\_width/height\}}). Finally, manual noise filtering yields a long-horizon dataset containing 371 scenarios.
+
+\mypara{Gaming Scenarios.}
+Games typically involve complex interactive processes. To this end, we collaborate with professional testers to construct 207 high-complexity scenarios spanning 13 popular games, covering core mechanics such as equipment management and event participation. Each scenario is structured as a long-horizon task chain (19 to 37 steps, mean = 23.7 steps), captured in 4508 screen images to simulate real player decision flows. Each task includes two levels of instructions: High-Level instructions (HL) define macro goals, such as ``purchase item XX in the game store," while Low-Level instructions (LL) are broken down into atomic operation sequences, such as ``click the store button," and ``click the purchase button." Additionally, every operation step is annotated with fine-grained UI metadata, including control type (e.g., button, text box, drop-down menu), bbox coordinates, and state attributes.
+
+
+\mypara{General Scenarios.}To assess generalization capability, we constructed 147 end-to-end task chains across 15 popular apps, covering complete user workflows from trigger to feedback. Each task requires 15-27 actions (mean = 19.5) and incorporates both abstraction levels: High-level instructions define global goals (e.g., 'Schedule a 1.5-hour meeting starting at 10 am on June 29th'). Low-level instructions specify atomic operations (e.g., Launch Tencent Meeting; Click 'Schedule'; Select 'Standard Meeting'; Set duration). All steps are annotated with granular UI semantics, emphasizing complex interface behaviours (e.g., multi-level dropdown navigation, real-time input validation) to validate long-horizon GUI agents in challenging workflows.
+
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=.99\textwidth]{figure/overview.pdf} % 将图形宽度设置为文本宽度的98%
+\caption{Illustration of LongHorizonUI framework. The LongGUIBench is introduced to define complex long-horizon interaction scenarios. An enhanced perceiver (OCR + Icon detection) extracts enriched UI element features, while a deep reasoning engine performs three-tier closed-loop validation of action feasibility. The compensation actuator employs multi-stage strategies (index/relative/absolute/historical coordinates) for robust execution.}
+\label{fig:overview}
+\end{figure*}
+
+\subsection{Multimodal Enhanced Perceiver}
+\label{sec:Perception}
+
+Accurately identifying and disambiguating interactive elements in context is key to enabling task automation in complex GUIs. To this end, we propose the Multimodal Enhanced Perceiver (MEP), which unifies icon detection, OCR recognition, and heuristic repair into an ID-centred abstraction layer, extracting actionable signals from evolving GUIs, inspired by prior work \citep{lu_2024_omniparser}.
+
+Specifically, given a GUI screenshot $S$, MEP extracts visual elements through parallel perception modules: (i) An enhanced detector identifies interactive controls, producing $E_{ui} = {(id_i, b_i, c_i)}_{i=1}^{N}$, with $id_i$ a unique spatial tag, $b_i$ its bounding box, and $c_i$ the confidence \revise{ from the detector head (sigmoid class probability)}. IDs serve as stable anchors, robust to small layout variations. \revise{ MEP also highlights previously clicked elements.} (ii) A conventional OCR module extracts $E_{\text{text}} = {(t_j, b_j)}_{j=1}^{M}$, with $t_j$ the detected text and $b_j$ the bounding box.
+To disambiguate composite controls such as “icon + text,” each $e_i \in E_{ui}$ is linked with its most relevant text via a semantic binding function:
+\begin{equation}
+    \label{eq:binding}
+    \hat{e}_i = \Phi(e_i, E_{\text{text}}) =
+    \begin{cases}
+        (id_i,\, b_i \cup b_{j^*},\, t_{j^*},\, c_i), & \text{if } \operatorname{IoU}(b_i, b_{j^*}) \ge \tau,\\[4pt]
+        (id_i,\, b_i,\, \emptyset,\, c_i), & \text{otherwise},
+    \end{cases}
+\end{equation}
+\revise{where $j^{*}=\arg\max_{j}\operatorname{IoU}(b_i,b_j)$ denotes the text box with maximum overlap, and binding is applied only when $\operatorname{IoU}(b_i,b_{j^*}) \ge \tau$ (Appendix~\ref{sec:Parameter_analysis}).}
+
+
+To mitigate missed detections of critical elements, such as close buttons on pop-ups, we employ a fallback template matcher that is activated when no elements are detected in designated high-priority areas $A_{\text{priority}}$\revise{ (small normalized bands around pop-up corners and bottom bars where missing a control can stall a trajectory)}. Upon activation, the module invokes a repair function $\mathcal{R}$ over $A_{\text{priority}}$, leveraging a template library $\mathcal{T}$\revise{ of canonical close/cancel, confirm/next, and back/home icons; high-similarity matches are inserted as new elements only in these regions} to match and restore omitted key elements.
+
+
+
+
+% 这里继续你的正文，文本会自动在左半栏环绕排版……
+
+
+
+
+\subsection{Deep Reflection Decider}
+\label{sec:LLM_Think}
+
+Current agent decision mechanisms \citep{Niu_2024, Kil_2024_CVPR} based on self-supervised training paradigms exhibit limited long-horizon generalization due to constrained dataset diversity, while MLLMs-based mechanisms \citep{NEURIPS2024_0520537b}, despite superior sequence modeling capabilities, suffer from cascading error propagation under dynamic interface shifts, compromising reliability in long-horizon task execution. To address this, we propose the Deep Reflection Decider, as illustrated in Figure~\ref{fig:think}, which implements a structured multi-level feedback mechanism to establish triple closed-loop reasoning. This strategy validates goal rationality pre-execution and confirms environmental-state consistency post-execution, ensuring action precision and prediction credibility.
+
+% 放在本小节开头的第一段之后，确保前面不是 \section / \subsection 之类的标题行
+\begin{wrapfigure}[17]{r}{0.46\textwidth}  % 14 表示大概占 14 行文字高度，可按实际调整
+  \vspace{-9pt}                            % 视情况微调上下间距
+  \centering
+  % 控制图像高度，避免太高撑满整列
+  \includegraphics[width=0.46\textwidth,height=0.45\textheight,keepaspectratio]{figure/figure4_think.pdf}
+  \caption{Deep reflection and decision-making processes designed to validate prior actions and predict subsequent steps.}
+  \label{fig:think}
+  \vspace{-3pt}
+\end{wrapfigure}
+
+
+Specifically, a strictly defined JSON Schema (fields: \texttt{historical\_status}, \texttt{import\_contents}, \texttt{think}, \texttt{Execute\_goal}, \texttt{action}, further details are provided in Appendix~\ref{sec:output_Format}.) enforces structured three-tier reasoning\revise{, where the first three fields implement reflection and the last two fields implement decision}:
+
+(1) \textit{Historical Validation}: the \texttt{historical status} validates UI state transitions (e.g., button activation, text input) via OCR/icon detection, establishing spatiotemporal verification loops. Failure flags trigger root-cause analysis upon detecting error dialogues or unresponsive elements.
+
+(2) \textit{Target Check}: the \texttt{import\_contents} field extracts screen-critical information, validating the MLLM's environmental comprehension via OCR/icon detection. Task-goal consistency assessments retain high-relevance text while filtering noise.
+
+(3) \textit{Action Explainability}: the \texttt{think} field requires the MLLM to sequentially analyze current UI states, failure causes (if any), and action localization rationale (e.g., ``Button \#12 has the highest interaction confidence''), with outputs culminating in executable goals (\texttt{Execute\_goal}) that are translated into atomic actions (\texttt{action}).
+
+\mypara{Pre-execution Reflection.}
+Before execution, each candidate action is screened for on-screen grounding and task entailment. We accept $a$ for execution only if
+\begin{equation}
+\phi(s_t,a \mid \mathcal{G}_t,\mathcal{T})
+=
+\mathbf{1}\!\big[g_{\mathrm{tg}}(a)\in \mathcal{G}_t\big]
+\;\land\;
+\mathbf{1}\!\big[K(d_{\mathrm{action}})\subseteq K(\mathcal{T})\big]
+= 1.
+\end{equation}
+
+Here, $\mathcal{G}_t$ denotes the UI elements at state $s_t$ from the perceiver,
+$\mathcal{T}$ the global task description, and $a$ a candidate action with
+(\texttt{Execute\_goal}, \texttt{action}) and description $d_{\text{action}}$.
+$g_{\mathrm{tg}}(a)$ is the target element of $a$, \revise{ and $K(\cdot)$ a keyword extractor enforces that the action semantics are consistent with the task.} In practice, if either the target element is absent from the current screen or the action semantics are not entailed by the task description, the action is rejected and a brief revision step is triggered using available OCR/icon evidence; otherwise, the action proceeds.
+
+
+\begin{algorithm}[t]
+\caption{\revise{Compensating Action Executor (single step)}}%
+\label{alg:caa_min}
+\begin{algorithmic}[1]
+\Require Current state $s_t$; candidates $\mathcal{A}$ from \textsc{Deep Reflection Decider} encoded as
+\Statex \hspace{1.8em}\texttt{index(position:``$i$")}, \texttt{relative(action:``$n,(x,y)$")},
+\Statex \hspace{1.8em}\texttt{absolute(point:``$(x,y)+\epsilon$")}; last committed snapshot $(s_{t-1}, p_{t-1})$
+\Ensure Executed $(a^\star,\mathrm{enc}^\star,p^\star)$ with $\delta\in\{\textsc{success},\textsc{fail}\}$ (rollback on fail)
+
+\State $\Pi \leftarrow$ \texttt{[index(position:``$i$"), relative(action:``$n,(x,y)$"),}
+\Statex\hspace{1.8em}\texttt{absolute(point:``$(x,y)+\epsilon$")]} \Comment{priority: index $\to$ relative $\to$ absolute}
+
+\For{\textbf{each} $\mathrm{enc}\in\Pi$}
+  \If{$\exists\,a\in\mathcal{A}$ \text{s.t.} $\mathrm{Encode}(a)=\mathrm{enc}$}
+    \State $p \leftarrow \textsc{ResolvePoint}(a,\mathrm{enc},s_t)$ \Comment{centroid / element-local map / screen map + jitter}
+    \State \textsc{ExecuteClick}$(p)$
+    \State $(s_{t+1},\delta) \leftarrow \textsc{Verify}_{\mathrm{MLLM}}(s_t,a,p)$
+    \If{$\delta=\textsc{success}$}
+      \State \Return $(a,\mathrm{enc},p,\textsc{success})$ \Comment{caller updates snapshot to $(s_{t+1},p)$}
+    \Else
+      \State \textbf{continue} \Comment{degrade to next encoding}
+    \EndIf
+  \EndIf
+\EndFor
+\State \textsc{RecordFailure}$(s_t,\mathcal{A})$; \textsc{Rollback}$(s_{t-1},p_{t-1})$
+\State \Return $(\bot,\bot,\bot,\textsc{fail})$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{{\revise{Compensating Action Executor}}}
+\label{sec:Action_Actuator}
+
+
+Current MLLM-driven agents face action–instruction uncertainty: free-format outputs lack a direct mapping to executable screen coordinates, while dynamic UIs require real-time correction. To bridge this semantic–physical gap, we \revise{introduce the Compensating Action Executor (CAE), which} adopt a robust action pipeline with multi-stage compensation and progress-triggered backtracking (see Algorithm~\ref{alg:caa_min}).
+
+\mypara{Compensating Action Execution.} We first parse element indices (e.g., \texttt{position:13}) and semantic descriptions (e.g., “Top Moments button”) from the Decider’s output, then resolve the target element’s bounding box from the live layout, denoted
+\(B=(x_{\min},y_{\min},x_{\max},y_{\max})\). Normalized coordinates \((x_{\text{norm}},y_{\text{norm}})\) are mapped to physical pixels using a \revise{device-aware scaling matrix $S=\mathrm{diag}(W_{\text{screen}},\, H_{\text{screen}})$, with
+$p = S \cdot (x_{\text{norm}},y_{\text{norm}})^\top$, so that the same normalized command is mapped consistently to device-specific click locations across different resolutions.}
+
+To enhance operational robustness, we employ a three-stage degradation policy consistent with our encodings \texttt{index(position:``$i$")}, \texttt{relative(action:``$n,(x,y)$")}, and \texttt{absolute(point:``$(x,y)+\epsilon$")}:
+
+\begin{itemize}[leftmargin=*,topsep=0pt]
+  \item (1) \textit{Index (centroid).} Prioritize index-based execution at the element centroid \(p_0\) of \(B\); i.e., the midpoints of the intervals \([x_{\min},x_{\max}]\) and \([y_{\min},y_{\max}]\).
+  \item (2) \textit{Relative (in-box).} If the attempt fails (\(\delta=0\)), draw a click \(p_{\mathrm{rel}}\) uniformly inside \(B\): sample \(\lambda_w,\lambda_h\!\sim\!\mathcal U[0,1]\) and place the point using the box width \(w=x_{\max}-x_{\min}\) and height \(h=y_{\max}-y_{\min}\).
+  \item (3) \textit{Absolute (screen) with jitter.} Upon repeated failure, use absolute screen coordinates mapped from \((x,y)\) and add a bounded perturbation \(\epsilon\) (e.g., \(\lVert \epsilon\rVert_\infty\!\le\!5\) px) to escape edge/occlusion cases; the base point defaults to the normalized target or \(p_0\) when unspecified.
+\end{itemize}
+
+\mypara{Post-execution Reflection.}
+For each action instruction $a$ at state $s_t$, we execute its candidates in the stated priority order. After each attempt, the \textsc{Deep Reflection Decider} performs state verification:
+\begin{equation}
+v_{t}=\mathrm{Verify}_{\mathrm{MLLM}}(s_t, a, p_{t}, I_{t+1})\in\{0,1\}.
+\end{equation}
+where $p_t$ is the click point computed from the current attempt and the resolved box $B$, and $I_{t+1}$ is the post-action screenshot. If $v_t=1$, we commit the step and update the snapshot to $(s_{t+1}, p_t)$. Otherwise, we degrade to the next candidate. \revise{ When all candidates for $a$ are rejected, we allow a few local re-planning calls to DRD at the same state; if these still fail, we invoke $\mathrm{Rollback}(s_{t-1}, p_{t-1})$ to restore the last committed snapshot and continue execution. (see Appendix~\ref{sec:Rollback} for details and statistics).}
+
+
+
+
+
+
+\section{Experiments}
+
+\subsection{Implementation Details}
+\label{sec:Details}
+
+To ensure fair evaluation across benchmarks, we select base models aligned with their architectures and configure consistent experimental settings. For LongHorizonBench, we adopt a representative MLLMs \citep{comanici2025gemini} as the backbone to ensure stable reasoning in long-horizon tasks. All components operate without fine-tuning, leveraging pre-trained models for task execution and evaluation. Task-specific prompts are designed to prevent ambiguity and enhance reproducibility (see Appendix~\ref{sec:Implementation_Details} for more details.).
+
+
+\begin{table*}[!t]
+\centering
+\caption{Performance Comparison of Models on LongGUIBench Long-Horizon Tasks}
+\label{tab:longHorizon_performance}
+\footnotesize % 或 \footnotesize，按你的模板统一
+\setlength{\tabcolsep}{4pt} % 可微调列间距以适配版面
+\begin{tabular}{lccccccccc}
+\toprule
+\textbf{Model Name} &
+\multicolumn{2}{c}{\textbf{General-Low}} &
+\multicolumn{2}{c}{\textbf{General-High}} &
+\multicolumn{2}{c}{\textbf{Game\_Low}} &
+\multicolumn{2}{c}{\textbf{Game\_High}} &
+\textbf{Avg} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}
+& \textit{TM} & \textit{SR} & \textit{TM} & \textit{SR} & \textit{TM} & \textit{SR} & \textit{TM} & \textit{SR} & \textit{Avg} \\
+\midrule
+\multicolumn{10}{l}{\emph{Base Models}} \\
+\midrule
+GPT-4o \citep{openai2024gpt4technicalreport} & 87.5 & 20.8 & 75.0 & 4.2 & 91.6 & 23.9 & 85.9 & 3.7 & 49.1 \\
+Gemini2.5 \citep{comanici2025gemini}        & 96.7 & 73.3 & 77.2 & 25.7 & 95.1 & 57.7 & 84.3 & 25.7 & 67.3 \\
+Qwen2.5-VL-7b \citep{Qwen2.5-VL}            & 92.3 & 82.7 & 73.1 & 29.3 & 92.4 & 72.8 & 68.9 & 27.4 & 67.4 \\
+\midrule
+\multicolumn{10}{l}{\emph{GUI Models}} \\
+\midrule
+OmniParser \citep{lu2024omniparserpurevisionbased}    & 90.0 & 83.0 & 79.3 & 35.6 & 91.8 & 61.0 & 70.4 & 20.1 & 66.4 \\
+AgentCPM-GUI \citep{zhang2025_agentcpm}               & 92.1 & 81.2 & 82.4 & 37.1 & 89.7 & 66.5 & 74.1 & 25.8 & 68.6 \\
+InfiGUI-R1 \citep{liu2025_infiguir1}                  & 93.2 & 79.7 & 56.7 & 23.8 & 92.9 & 67.2 & 53.9 & 19.4 & 61.8 \\
+UI-TARS-1.5 \citep{qin2025_uitars}                    & 93.6 & 79.2 & 75.4 & 21.8 & 88.2 & 69.5 & 77.8 & 18.9 & 65.8 \\
+\midrule
+\rowcolor{black!4}
+\textbf{LongHorizonUI} & \textbf{93.5} & \textbf{85.3} & \textbf{78.0} & \textbf{52.3} & \textbf{93.8} & \textbf{83.9} & \textbf{79.7} & \textbf{52.1} & \textbf{77.3} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+% byf：我想这里把gemini2.0给删了吧，因为这个其实是gemini内部也搭建了workflow来操作的。所以没必要放，而且准确率还挺高。注释我都加了，我想的是要不都加，要不都不加的
+\begin{table*}[!t]
+\centering
+\caption{Grounding Performance Comparison on the ScreenSpot Benchmark.}
+\label{tab:ground_performance}
+\footnotesize % 或 \footnotesize，按你的模板统一
+\setlength{\tabcolsep}{10pt} % 可微调列间距以适配版面
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+\textbf{Model Name} &
+\multicolumn{2}{c}{\textbf{Mobile}} &
+\multicolumn{2}{c}{\textbf{Desktop}} &
+\multicolumn{2}{c}{\textbf{Web}} &
+\textbf{Avg} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+& \textit{Text} & \textit{Icon} & \textit{Text} & \textit{Icon} & \textit{Text} & \textit{Icon} & \\
+\midrule
+\multicolumn{8}{l}{\emph{Base Models}} \\
+\midrule
+GPT-4o \citep{openai2024gpt4technicalreport} & 30.5 & 23.2 & 20.6 & 19.4 & 11.1 & 7.8 & 18.8 \\
+Gemini2.0                                     & --   & --   & --   & --   & --   & --   & 84.0 \\
+Qwen2.5-VL-7b \citep{bai2023qwentechnicalreport} & -- & --   & --   & --   & --   & --   & 84.7 \\
+\midrule
+\multicolumn{8}{l}{\emph{GUI Models}} \\
+\midrule
+CogAgent \citep{Hong_2024_CVPR_CogAgent}  & 67.0 & 24.0 & 74.2 & 20.0 & 70.4 & 28.6 & 47.4 \\
+SeeClick \citep{cheng_2024_seeclick}      & 78.0 & 52.0 & 72.5 & 30.0 & 55.7 & 32.5 & 53.4 \\
+ShowUI \citep{Lin_2025_CVPR}              & 92.3 & 75.5 & 76.3 & 61.1 & 81.7 & 63.6 & 75.1 \\
+OmniParser \citep{lu2024omniparserpurevisionbased}  & 93.9 & 57.0 & 91.3 & 63.6 & 81.3 & 51.0 & 75.1 \\
+UI-TARS \citep{qin2025_uitars}            & 93.0 & 75.5 & 90.7 & 68.6 & 84.3 & 74.8 & 82.3 \\
+InfiGUI-R1 \citep{liu2025_infiguir1}      & \textbf{97.1} & 81.2 & 94.3 & 77.1 & 91.7 & 77.6 & 87.5 \\
+\midrule
+\rowcolor{black!4}
+\textbf{LongHorizonUI} & 95.6 & \textbf{86.9} & \textbf{96.8} & \textbf{81.4} & \textbf{93.5} & \textbf{90.9} & \textbf{90.4} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+
+
+\subsection{Benchmarks}
+\label{sec:Benchmark}
+
+We evaluate our model using the following benchmarks (i) LongGUInBench, our curated dataset of \revise{371} complex GUI task trajectories spanning 28 diverse applications (including gaming, enterprise systems, and creative tools) with an average trajectory length of 24.6 steps (max 37 steps) for evaluating long-horizon reasoning robustness; (ii) Screenspot for granular grounding capability assessment across multiple device types; and (iii)  AndroidControl (Low/High difficulty tiers) \citep{NEURIPS2024_androidcontrol} and GUI-Odyssey \citep{2024_gui_odyssey} datasets to measure real-time navigation performance under dynamic interface constraints.
+
+
+
+
+
+
+
+
+
+\subsection{Main Results}
+\label{sec:results}
+
+
+\mypara{Long-horizon Reasoning Capability.}To systematically evaluate long-horizon reasoning capabilities, we conducted extensive experiments comparing LongHorizonUI with state-of-the-art methods on our proposed LongGUIBench benchmark, which features long-horizon tasks. As shown in Table~\ref{tab:longHorizon_performance}, LongHorizonUI achieves a step success rate (SR) of 85.3\% for low-level instructions and 52.3\% for high-level instructions in general scenarios, which represents improvements of 6.1\% and 30.5\% over the state-of-the-art method (UI-TARS-1.5), respectively, and significantly outperforms all open-source models and GUI-specific training methods. In more complex game scenarios, LongHorizonUI reaches a low-level instruction SR of 83.9\% and a high-level instruction SR of 52.1\%, which maintains a clear lead across all compared methods. These results validate the proposed LongHorizonUI's significant advantage in modeling long-horizon dependencies.
+
+\mypara{Grounding Capability.} Table~\ref{tab:ground_performance} compares our LongHorizonUI framework with mainstream methods on the ScreenSpot dataset, including base models and SOTA GUI agents. LongHorizonUI demonstrates consistent superiority across device subsets (mobile, desktop, web), achieving 90.4\% average task success rate, surpassing all open-source models and outperforming the previous SOTA GUI framework (UI-TARS) by 2.9\%. These results validate LongHorizonUI’s robust grounding capability across diverse devices and scenarios.
+
+
+\mypara{Navigation Capability.} To rigorously evaluate the navigation capabilities of our method, we benchmarked LongHorizonUI against state-of-the-art approaches on AndroidControl \citep{NEURIPS2024_androidcontrol} and GUI-Odyssey \citep{2024_gui_odyssey}. As shown in Table~\ref{tab:Navigation_performance}, LongHorizonUI achieves significant improvements in SR over both zero-shot models and GUI-specialized baselines. Compared to Qwen2.5-VL-7B , our method elevates SR by 6.4\% on AndroidControl-High and 6.1\% on GUI-Odyssey. Moreover, LongHorizonUI attains an average SR gain of 2.3\% over the strong GUI-R1-7B baseline. These results demonstrate that LongHorizonUI not only significantly enhances planning robustness for long-horizon tasks but also retains fundamental interaction capabilities for short sequences.
+
+\begin{table*}[!ht]
+\centering
+
+\caption{Performance comparison on AndroidControl and GUI-Odyssey benchmarks}
+\label{tab:Navigation_performance}
+\footnotesize % 或 \footnotesize，按你的模板统一
+\setlength{\tabcolsep}{5.5pt} % 可微调列间距以适配版面
+\begin{tabular}{@{}llccccccc@{}}
+\toprule
+\textbf{Model Type} & \textbf{Model Name} &
+\multicolumn{2}{c}{\textbf{AndroidControl-Low}} &
+\multicolumn{2}{c}{\textbf{AndroidControl-High}} &
+\multicolumn{2}{c}{\textbf{GUI-Odyssey}} &
+\textbf{Avg} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(l){7-8}
+ & & \textit{TM} & \textit{SR} & \textit{TM} & \textit{SR} & \textit{TM} & \textit{SR} & \\
+\midrule
+\multirow{3}{*}{Base Models}
+    & GPT-4o & 74.3 & 28.4 & 63.1 & 21.2 & 37.5 & 5.4 & 38.3 \\
+    & Qwen2.5-VL-3B & 62.0 & 59.3 & 47.8 & 38.9 & 37.4 & 26.7 & 45.4 \\
+    & Qwen2.5-VL-7B & 83.4 & 62.5 & 68.7 & 47.1 & 55.6 & 34.4 & 58.6 \\
+\midrule
+\multirow{4}{*}{GUI model}
+    & OS-Atlas-4B  & 64.6 & 40.6 & 49.0 & 22.8 & 49.6 & 20.3 & 41.1 \\
+    & Os-Atlas-7B & 73.0 & 50.9 & 57.4 & 29.8 & 60.4 & 27.0 & 49.8 \\
+    & GUI-R1-3B  & 83.7 & 64.4 & 58.0 & 46.6 & 54.8 & 41.3 & 58.1 \\
+    & GUI-R1-7B & 85.2 & 66.5 & 71.6 & 51.7 & 65.5 & 38.8 & 63.2 \\
+\midrule
+\textbf{Ours}
+    & \textbf{LongHorizonUI} & \textbf{87.5} & \textbf{68.9} & \textbf{73.4} & \textbf{54.2} & \textbf{68.3} & \textbf{40.5} & \textbf{65.5} \\
+\bottomrule
+\end{tabular}
+
+\end{table*}
+
+
+
+% 需要的宏包（导言区）
+% \usepackage{subcaption}  % 你已有
+% \usepackage{graphicx}    % 你已有
+
+\newlength{\subfigH}
+\setlength{\subfigH}{4.8cm} % 目标子图内容高度
+
+\begin{figure}[t]
+  \centering
+
+  % 两个子图宽度一致，预留固定高度的内容盒以保证等高视觉
+  \begin{subfigure}[t]{0.485\columnwidth}
+    \centering
+    % 固定高度的容器：高为 \subfigH，内容垂直居中
+    \begin{minipage}[c][\subfigH][c]{\linewidth}
+      % 在容器内按“最大宽度/最大高度”自适应，保持比例，不出界
+      \includegraphics[width=\linewidth,height=\subfigH,keepaspectratio]{figure/figure6_ablation.pdf}
+    \end{minipage}
+    \caption{Perception components.}
+    \label{fig:ablation_1}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.485\columnwidth}
+    \centering
+    \begin{minipage}[c][\subfigH][c]{\linewidth}
+      \includegraphics[width=\linewidth,height=\subfigH,keepaspectratio]{figure/figure5_ablation.pdf}
+    \end{minipage}
+    \caption{Compensating actions.}
+    \label{fig:ablation_2}
+  \end{subfigure}
+
+  \caption{Ablation analyses: (a) perception components; (b) compensating actions.}
+  \label{fig:ablation_combined}
+\end{figure}
+
+
+\subsection{Ablation Study}
+\label{sec:Ablation}
+
+\mypara{Effectiveness of Perception Components.} Figure~\ref{fig:ablation_1} reports an ablation study that isolates each perception module. Jointly using the refined icon detector and the OCR recognizer yields the highest accuracy and robustness. Removing the icon detector cuts fine-grained recognition, lowering the step-completion rate by 6.1\%. Disabling OCR causes the same 2.3\% drop and leads to frequent errors on icon-text composite widgets. Turning off the adaptive grid prevents the detector from scaling to different screen resolutions, so microscopic elements on high-resolution displays are often missed. Together, these three modules supply the rich visual context required for reliable long-horizon modeling.
+
+\mypara{Effectiveness of Compensatory Actions.} Figure~\ref{fig:ablation_2} visually compares the different action modes, indexing instructions and step lengths, showing that indexing alone delivers an 81.4\% task-completion rate, outperforming all other action modes. Adding compensatory actions on top of indexing gives further gains by 1.2\% (relative coordinates), 2.5\% (absolute coordinates), and 3.9\% (historical coordinates). These results confirm that compensatory actions complement indexing; by fusing historical spatial cues with fault-tolerant coordinate transforms, the executor remains robust even under dynamic interface disturbances.
+
+
+\subsection{Case Visualization}
+\label{sec:Visualization}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=.99\textwidth]{figure/figure7_visualization.pdf} % 将图形宽度设置为文本宽度的98%
+\caption{Case visualization of LongHorizonUI in a gaming scenario.}
+\label{fig:visualization}
+\end{figure*}
+
+
+As illustrated in Figure~\ref{fig:visualization}, the LongHorizonUI agent executes a fully automated operation sequence in the Honor of Kings scenario. Guided by indexing instructions, the agent achieves pixel-precise grounding on all target UI elements, including minuscule widgets (Step 3) and low-contrast components (Step 5). Notably, when confronted with a sudden pop-up interruption during Step 2, the agent dynamically detects and disables the interference source through its real-time perceptual module, subsequently resuming task execution without workflow disruption. This end-to-end workflow spans multi-step operations from application launch, skill switching, to background process management, demonstrating LongHorizonUI’s capability to maintain cross-step operational precision and dynamic disturbance robustness in complex task chains.
+
+\section{Conclusion}
+
+\mypara{Summary.}In this work, we present LongHorizonUI, an innovative framework for long-horizon GUI tasks, featuring a multimodal enhanced perceptron for precise capture of UI element states, a three-tier closed-loop reasoning engine for action verification/prediction, and an innovative multi-level compensator ensuring action execution validity. Demonstrating superior performance on LongGUIBench (≥15-step tasks) and public benchmarks, it establishes a new paradigm for reliable long-horizon GUI tasks.
+
+\mypara{Limitations \& Future Work.}
+Despite achieving state-of-the-art performance without introducing notable overhead relative to prior agents, LongHorizonUI still inherits the latency of MLLM-dependent pipelines. Next, we will focus on model-level efficiency—distillation, quantization, and context-aware prompt compression.
+
+
+
+
+
+\clearpage             % 推荐：另起一页更整洁
+\input{checklist}      % 引用 checklist.tex（与主 tex 同级或给出相对路径）
+\color{black}          % 可选：保险起见把颜色复原，避免参考文献被染色
+
+\bibliography{iclr2026_conference}
+\bibliographystyle{iclr2026_conference}
+
+\clearpage
+\appendix
+\section*{Appendix}
+
+
+This is the supplementary file for our submission titled \textit{LongHorizonUI: A Unified Framework for Robust long-horizon Task Automation for GUI Agent}. This material supplements the main paper with the following content:
+\vspace{0.3cm}
+\begin{itemize}
+   \item (\ref{sec:motivation}) \textbf{Motivation of LongHorizonUI}
+    % \begin{itemize}
+    %     \item (\ref{sec:Long-horizon evaluation}) Analysis of Long-horizon evaluation
+    % \end{itemize}
+     \item (\ref{sec:Related}) Related work
+    \item (\ref{sec:Additional Experiments}) Additional Experiments
+    \begin{itemize}
+        \item (\ref{sec:Implementation_Details}) Implementation Detail
+        \item (\ref{sec:Benchmarks}) Benchmarks
+        \item (\ref{sec:Parameter_analysis}) Parameter analysis
+    \end{itemize}
+    \item (\ref{sec:Qualitative}) \textbf{Prompts in Automated Pipeline}
+       \begin{itemize}
+        \item (\ref{sec:output_Format}) Output Format Structure Template
+        \item (\ref{sec:Visual_Processing_Template}) Visual Processing Template
+        \item (\ref{sec:Action_Selection_Protocol}) Action Selection Protocol
+        \item (\ref{sec:Workflow_Exception_Handling}) Workflow Exception Handling
+    \end{itemize}
+
+    \item (\ref{sec:Qualitative}) \textbf{Qualitative Analysis}
+
+    \item (\ref{sec:discussion}) \textbf{Additional Discussions}
+\end{itemize}
+
+\section{The use of large language models}
+\label{sec:LLM}
+
+In this work, large language models (LLMs) are used exclusively for polishing the writing and checking grammar. They are not involved in research ideation, experimental design, data analysis, or the formulation of conclusions. The authors make all substantive intellectual contributions.
+
+\section{Motivation of LongHorizonUI}
+\label{sec:motivation}
+
+
+To systematically assess the performance of state-of-the-art UI agents on long-horizon interaction tasks, we design a step-length-driven, multi-factor evaluation protocol that highlights the need for robustness at scale.
+We first compute the step-length distribution of the \textsc{AndroidControl} test set (Figure~\ref{fig1:long_horizon_performance}a) and observe that more than~80\% of the episodes contain fewer than ten actions, whereas sequences of ten or more steps, those that truly stress long-horizon reasoning, account for less than~20\%.
+This imbalance suggests that average-case metrics allow agents to mask failures on long chains, motivating a dedicated benchmark for long-horizon evaluation.
+We then simulate the execution-success rate (ESR) as a function of step length for five representative agents under the same distribution (Figure~\ref{fig1:long_horizon_performance}b).
+UI-TARS-2B \citep{qin2025_uitars}, InfiGUI-R1-3B \citep{liu2025_infiguir1}, Qwen2.5-VL-7B \citep{Qwen2.5-VL}, and AgentCPM \citep{zhang2025_agentcpm} all exhibit a cliff-like drop after the ten-step threshold (ESR~50--70\%), whereas \textsc{LongHorizonUI} remains nearly flat and sustains roughly 75\% ESR between 16 and~24 steps.
+These results confirm that conventional agents accumulate uncorrected errors on long chains, while the multimodal perception, reflective planning, and compensatory execution modules in \textsc{LongHorizonUI} markedly curb performance degradation.
+Finally, aggregating the mean ESR for sequences of ten or more steps (Figure~\ref{fig1:long_horizon_performance}c) shows that \textsc{LongHorizonUI} achieves 73.8\%, outperforming the strongest baseline, \textsc{AgentCPM}, by approximately five percentage points, further substantiating its long-horizon robustness.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=1.0\linewidth]{appendix/figure1_long_horizon_performance.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Further Analysis of Motivation. (a) Step-length distribution of AndroidControl test episodes; (b) Execution-success rate (ESR) vs. step length for UI agents; (c) Mean ESR comparison for long sequences (≥10 steps). LongHorizonUI demonstrates sustained performance robustness on extended interactions.}
+\label{fig1:long_horizon_performance}
+\end{figure}
+
+\section{Related work}
+\label{sec:Related}
+
+\mypara{Multimodal Large Language Models.}
+In recent years, Multimodal Large Language Models (MLLMs) have emerged as a pivotal research focus in artificial intelligence due to their capacity for unified cross-model reasoning. Built upon conventional Large Language Models (LLMs), MLLMs incorporate vision encoders (e.g., ViT \citep{vit}, CLIP \citep{clip}) to process image data, enabling cross-modal comprehension from static images to video sequences. This architectural paradigm facilitates high-performance systems such as Qwen-VL \citep{Qwen2.5-VL}, GPT-4V\citep{openai2024gpt4technicalreport}, and BLIP-2 \citep{Li_2023_ICML_BLIP2}, which exhibit robust interactive understanding in dynamic multimodal environments. However, current models still lack fine-grained perception and can hallucinate, often yielding erroneous state predictions that constrain deployment in GUI agents and broader applications.
+
+
+
+\mypara{GUI Agent.} Current research on GUI agents primarily focuses on input modalities and learning paradigms. Regarding input modalities, early LLM-based agents \citep{lee_2024_explore, putta_2024_agent, 2024_SIGKDD_AutoWebGLM} typically relied on GUI parsers to convert interfaces into text-based representations via HTML parsing or screenshots. This approach lacked visual granularity, resulting in limited generalisation capabilities. The emergence of MLLMs \citep{NEURIPS2024_0520537b, NEURIPS2023_7cc1005e} enables agents to process visual inputs directly, achieving more intuitive interface comprehension. In learning paradigms, Supervised Fine-Tuning \citep{furuta_2024_multimodalweb, li_2024_appagentv2} optimises models with domain-specific data to enhance task-specific performance, yet requires costly annotations and struggles with generalisation to novel scenarios. Conversely, reinforcement learning (RL) \citep{shi_2025_mobileguirl, luo_2025_guir1, yuan2025enhancing} improves decision efficiency through autonomous exploration, but faces bottlenecks in training stability and reward function design. While these methods perform well in short-horizon tasks, current architectures struggle to maintain intent consistency across steps and lack precise historical state backtracking. Consequently, their reasoning capabilities remain confined to short-term tasks, making long-horizon task planning and execution a critical challenge.
+
+
+\section{Additional Experiments}
+\label{sec:Additional Experiments}
+
+\subsection{Implementation Details}
+\label{sec:Implementation_Details}
+We adopt Google’s \textbf{Gemini-2.5 Pro} as our core reasoning backbone due to its advanced reasoning capabilities and high performance on complex reasoning tasks. The model is accessed via Google Vertex AI API with deterministic inference and a maximum output length of 2048 tokens to ensure reproducibility. All experiments run on a cluster of eight Tesla V100 GPUs  under Ubuntu 20.04 LTS, using PyTorch 2.1 and CUDA 11.6; model serving is managed by Ray Serve for scalable, high-throughput inference. Prompt templates strictly follow a JSON schema fields include \texttt{historical\_status}, \texttt{think}, and \texttt{Execute\_goal}—enforcing structured multi-level reasoning without additional fine-tuning.
+
+\begin{table}[t]
+\centering
+\caption{Grounding performance on ScreenSpotV2.}
+\label{tab:ground_performance_2}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Model Name} &
+\multicolumn{2}{c}{\textbf{Mobile}} &
+\multicolumn{2}{c}{\textbf{Desktop}} &
+\multicolumn{2}{c}{\textbf{Web}} &
+\textbf{Avg} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+& \textit{Text} & \textit{Icon/Widget} & \textit{Text} & \textit{Icon/Widget} & \textit{Text} & \textit{Icon/Widget} & \\
+\midrule
+\multicolumn{8}{l}{Base Models} \\
+\midrule
+GPT-4o \citep{openai2024gpt4technicalreport}      & 49.6 & 14.2 & 26.9 & 40.1 & 18.7 & 56.8 & 43.5 \\
+Gemini-2.5-Pro \citep{comanici2025gemini}         & 63.5 & 42.1 & 70.8 & 49.3 & 81.7 & 84.2 & 68.3 \\
+Qwen2.5-VL \citep{Qwen2.5-VL}                     & 66.8 & 92.1 & 46.8 & 72.6 & 44.3 & 83.0 & 70.4 \\
+\midrule
+\multicolumn{8}{l}{GUI Models} \\
+\midrule
+SeeClick \citep{cheng_2024_seeclick}              & 78.4 & 50.7 & 70.1 & 29.3 & 55.2 & 32.5 & 55.1 \\
+OS-Atlas-4B                  & 87.2 & 59.7 & 72.7 & 46.4 & 85.9 & 63.1 & 71.9 \\
+OS-Atlas-7B \citep{wu2024osatlas}                 & 95.1 & 75.8 & 90.7 & 63.6 & 90.6 & 77.3 & 84.1 \\
+UI-TARS-7B                                        & 95.2 & 79.1 & 90.7 & 68.6 & 87.2 & 78.3 & 84.7 \\
+\midrule
+\rowcolor{black!4}
+\textbf{LongHorizonUI (ours)}                     & \textbf{94.5} & \textbf{80.6} & \textbf{94.3} & \textbf{72.9} & \textbf{91.5} & \textbf{83.3} & \textbf{86.2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Benchmarks}
+\label{sec:Benchmarks}
+
+\mypara{Grounding-Centric Benchmarks: ScreenSpot Series.}
+Accurate element localization is the foundation of GUI automation. ScreenSpot is a cross-platform grounding benchmark with over 1,200 natural-language instructions spanning iOS, Android, macOS, Windows, and Web interfaces. Each instruction is paired with pixel-level bounding boxes and element-type labels (text, icon, or widget) and covers challenging scenarios such as icon-text composites and occluded controls. ScreenSpot-v2 \citep{wu2024osatlasfoundationactionmodel} further enhances robustness by adding 564 procedurally generated tasks—created via the JEDI synthetic pipeline with 4 million samples—to test layout generalization across platforms.
+
+\mypara{Navigation-Centric Benchmarks: AndroidControl \& GUI Odyssey.}
+Once elements can be reliably located, agents must navigate within and across apps. AndroidControl \citep{NEURIPS2024_androidcontrol}, the largest public mobile navigation corpus, contains 15,283 human demonstrations divided into low-difficulty single-app workflows (< 10 steps) and high-difficulty cross-app tasks with real-time interruptions (e.g., “Select photo from Gallery → Upload via Email”). It evaluates agents’ comprehension of both high-level goals (“Book a ride”) and low-level operations (“Tap ‘Search’”). GUI Odyssey \citep{2024_gui_odyssey} extends this to long-horizon, cross-app navigation with 7,735 mission-based episodes across 201 apps and 1,400+ app combinations. It injects dead-end paths to test backtracking and measures temporal efficiency through metrics like average path length and decision latency.
+
+
+
+\mypara{Long-Horizon Task Benchmark: LongGUIBench.}
+The ultimate test of a GUI agent is executing extended multi-step workflows end to end. LongGUIBench comprises 371 complex task trajectories across 28 applications, split into 224 high-complexity game scenarios (19–37 steps, mean=23.7) and 147 general productivity scenarios (15–27 steps, mean=19.5), totaling 4,508 screenshots. Every task includes dual-level annotations—High-Level goals (e.g., “Purchase item XX”) and Low-Level actions (e.g., “Click the Store button; Select ‘Buy’”)—alongside control type, bounding box, and state metadata. A 42\% layout-shift rate enables rigorous testing of historical-state verification and error-recovery mechanisms.
+
+
+
+
+\subsection{Parameter analysis}
+\label{sec:Parameter_analysis}
+
+\mypara{Further Grounding Analysis.}The extended evaluation on ScreenSpot-V2 (Table~\ref{tab:ground_performance_2}) confirms our framework's robust grounding capabilities, where LongHorizonUI achieves competitive performance (86.2\% avg) despite specialized UI-TARS models showing advantages in isolated recognition. This apparent discrepancy stems from UI-TARS's specialization in static vision features while LongHorizonUI prioritizes dynamic actionability essential for downstream workflows. Crucially, our Multimodal Enhanced Perceiver's IoU-based element fusion resolves 92\% of mobile occlusion cases that degrade competitors (e.g., 20.5\% improvement over OS-Atlas-7B in low-contrast scenarios). Though UI-TARS-7B leads in desktop icon recognition (87.9\% vs ours 72.9\%), our unified representation reduces cross-device variance to just 8.3\% versus their 14.7\%, validating our approach's suitability for practical long-horizon operations where contextual adaptability outweighs pixel-level precision.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=.7\linewidth]{appendix/figure2_iou.pdf} % 调整图形宽度为当前列宽的80%
+\caption{IoU Threshold Analysis for icon Elements.}
+\label{fig2:figure2_iou}
+\end{figure}
+
+
+\mypara{Threshold-Sweep Experiment.}To quantify how the detector’s locality constraint influences downstream control, we perform an experiment in which the IoU criterion for merging OCR text and icon boxes is varied from 0.6 to 0.9 (Figure~\ref{fig2:figure2_iou}). When the threshold is too loose (0.6), false-positive matches increase, yielding an overall task-success rate (SR) of 82.7\%. Tightening the requirement to 0.7 suppresses spurious pairs and raises SR to 83.5\%. The best performance is obtained at IoU = 0.8, where LongHorizonUI reaches its peak SR of \textbf{83.9\%}. Pushing the threshold further to 0.9, however, makes the detector overly selective; missed matches propagate to action planning and drive SR back down to 83.1\%. These results confirm that an IoU of 0.8 provides the best balance between recognition precision and recall, and thus maximizes end-to-end success on \textsc{LongGUIBench}.
+
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.9\linewidth]{appendix/figure3_output_template.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Structured Agent Response Schema. Mandates a five-field JSON output format enforcing visual goal verification (Historical\_status), content extraction (Import\_contents), chain-of-thought reasoning (Think), next-goal declaration, and parameterized actions.}
+\label{fig3:output_template}
+\end{figure*}
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.9\linewidth]{appendix/figure4_output_example.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Structured Action Execution Example. Demonstrates agent output conforming to the five-field JSON schema: verifying historical success (CIKE14 preset), extracting relevant content, reasoning through actions, declaring next goal (tap 'Use'), and parameterizing the click command (position 36).}
+\label{fig4:output_example}
+\end{figure*}
+
+\begin{table}[t]
+    \centering
+    \small % 保持小字体
+    \caption{Rollback statistics regarding triggering frequency and recovery success.}
+    \label{tab:rollback_stats}
+    \setlength{\tabcolsep}{6pt} % 调整列间距
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Dataset} & \textbf{Rollback Triggered} & \textbf{Success post-Rollback} & \textbf{Restart Required} \\
+        \midrule
+        AndroidControl-High & 12.4\% & 69.7\% & 1.8\% \\
+        GUI-Odyssey         & 15.3\% & 73.1\% & 2.4\% \\
+        LongGUIBench-Game   & 18.6\% & 71.2\% & 2.7\% \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Rollback Frequency and Efficacy}
+\label{sec:Rollback}
+ \revise{We quantify the invocation rate and recovery capability of the CAE's rollback mechanism across three benchmarks. Consistent with the protocol in Sec.2.4, rollback is triggered only after local re-planning attempts are exhausted. Table~\ref{tab:rollback_stats} reveals that while rollbacks occur in 12--19\% of episodes, they are highly effective: approximately 70\% of these episodes eventually succeed. Notably, full restarts are required in less than 3\% of cases. These statistics confirm that the rollback module acts as an efficient safety net, robustly correcting state deviations in long-horizon interactions without incurring the high cost of frequent resets.}
+
+\begin{table}[t]
+    \centering
+    \small
+    \caption{Zero-shot success rates (SR, \%) on cross-domain benchmarks. LongHorizonUI demonstrates superior robustness, particularly in the long-horizon (50-step) OSWorld setting.}
+    \label{tab:osworld_androidworld}
+    \setlength{\tabcolsep}{6pt}
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Method} & \textbf{OSWorld (15 steps)} & \textbf{OSWorld (50 steps)} & \textbf{AndroidWorld} \\
+        \midrule
+        Gemini-2.5-Pro   & 11.7 & --   & 40.6 \\
+        UI-TARS-72B      & 18.8 & 24.6 & 46.6 \\
+        \rowcolor{black!4} \textbf{LongHorizonUI} & \textbf{19.9} & \textbf{29.4} & \textbf{47.9} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+ \begin{table}[t]
+    \centering
+    \small
+    \caption{Runtime and backbone trade-offs on LongGUIBench and AndroidControl.}
+    \label{tab:runtime_backbone}
+    \setlength{\tabcolsep}{6pt}
+    \begin{tabular}{lccccc}
+        \toprule
+        \textbf{Backbone} & \textbf{SR (LGB, \%)} & \textbf{SR (AC, \%)} & \textbf{Total / step (s)} & \textbf{Non-MLLM (s)} & \textbf{MLLM (s)} \\
+        \midrule
+        Gemini-2.5-Pro (default) & 83.9 & 68.9 & 8.26 & 1.18 & 7.08 \\
+        Gemini-1.5-Flash        & 75.3 & 64.7 & 5.74 & 1.35 & 4.39 \\
+        Qwen2.5-VL-7B           & 78.8 & 65.4 & 6.59 & 1.13 & 5.46 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Zero-Shot Cross-Domain Generalization.}
+\label{sec:Rollback}
+ \revise{We evaluate the transferability of LongHorizonUI to AndroidWorld and OSWorld under a strict zero-shot protocol. We deploy the core pipeline (MEP, DRD, CAE) without any parameter updates or benchmark-specific tuning, requiring only minimal API adaptation. For OSWorld, we adhere to the UI-TARS protocol, reporting success rates under 15-step and 50-step budgets. As shown in Table~\ref{tab:osworld_androidworld}, LongHorizonUI consistently outperforms state-of-the-art baselines. While the improvement over UI-TARS-72B is incremental on AndroidWorld and the short-horizon OSWorld (15 steps) setting (1.1--1.3\%), the performance gap widens significantly to 4.8\% in the 50-step setting (29.4\% vs. 24.6\%). This trend validates that our hierarchical planning and error-correction mechanisms effectively mitigate error accumulation over extended trajectories.}
+
+
+
+
+\subsection{Runtime and Backbone Trade-offs}
+\label{sec:runtime_backbone}
+\revise{We further quantify the end-to-end latency of LongHorizonUI under different backbones. As shown in Table~\ref{tab:runtime_backbone}, non-MLLM components (MEP, CAE, I/O) contribute only about 1.1--1.4\,s per step, while the remaining 4--7\,s are dominated by MLLM inference. Switching from Gemini-2.5-Pro to Gemini-1.5-Flash or Qwen2.5-VL-7B reduces per-step latency from 8.26\,s to 5.74--6.59\,s, at the cost of a moderate SR drop (e.g., from 83.9\% to 75.3\% on LongGUIBench). For a typical 22-step LongGUIBench episode, this corresponds to roughly 3\,min with Gemini-2.5-Pro versus about 2--2.5\,min with the lighter backbones. These results show that the non-MLLM overhead of LongHorizonUI is relatively small and that users can trade a few SR points for noticeably lower latency by choosing a faster backbone.}
+
+
+
+\section{Prompts in Automated Pipeline}
+\label{sec:prompt}
+
+\subsection{Output Format Structure Template}
+\label{sec:output_Format}
+As depicted in Figure~\ref{fig3:output_template}, the framework specifies a JSON schema for agent output, enforcing strict structural conformity through five validated fields: visual goal assessment, task-relevant content extraction, chain-of-thought reasoning, next-action objective declaration, and parameterized command specification. It mandates termination (“Done” action) exclusively upon visual confirmation of task completion, instituting a closed-loop verification system that binds agent responses to perceptual evidence. The schema functions as a structured action-language interface between cognitive processing and environmental actuation.
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.9\linewidth]{appendix/figure5_action_template.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Visual Processing and Action Selection Prompt Template.}
+\label{fig5:action_template}
+\end{figure*}
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.9\linewidth]{appendix/figure6_pop_up_template.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Exception Handling Prompt Template. Establishes interrupt-driven protocols for disruptive UI events: highest-priority pop-up closure (top-right), black-screen re-detection (10s timeout), and app-termination recovery before resuming primary tasks.}
+\label{fig6:pop_up_template}
+\end{figure*}
+
+
+\subsection{Visual Processing Template}
+\label{sec:Visual_Processing_Template}
+This template prescribes structured rules for interpreting annotated screenshots in GUI automation environments, as shown in Fig~\ref{fig5:action_template}. It mandates rigorous analysis of vision model-generated highlights (colored bounding boxes with indices) as primary reference points for UI element identification. Crucially, it enforces visual outcome validation as the sole criterion for action success evaluation, overriding API execution status to mitigate observation-action discrepancy. The framework establishes annotation-based perception as the foundational input for agent decision-making, ensuring environment fidelity through computational visual verification.
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.9\linewidth]{appendix/figure7_callback.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Error Recovery Example. Demonstrates self-corrected misclick: Agent clicked ``Guild" instead of ``Delegate" (due to occlusion), then executed back-arrow regression (Index 1) and precision retargeting via [0.5,0.8] coordinates to achieve the intended action.}
+\label{fig7:callback}
+\end{figure*}
+
+\subsection{Action Selection Protocol}
+\label{sec:Action_Selection_Protocol}
+As depicted in Figure~\ref{fig5:action_template}, the protocol formalizes a hierarchical targeting methodology for GUI interactions, prioritizing: (1) direct highlight indices when element-box alignment is exact; (2) relative coordinates (0.0-1.0 scale) within oversized highlight regions for precision targeting; and (3) absolute coordinates (0-1000 normalized system) when highlights are absent or unreliable. This tripartite selection strategy optimizes spatial accuracy while accommodating diverse interface topologies, with explicit constraints prohibiting coordinate values exceeding the 1000-unit boundary to maintain dimensional integrity.
+
+
+
+\subsection{Workflow Exception Handling}
+\label{sec:Workflow_Exception_Handling}
+As illustrated in Figure~\ref{fig6:pop_up_template}, this template defines prioritized response protocols for disruptive interface events, establishing a scenario-based classification system: (1) unexpected pop-ups (highest priority, requiring immediate closure via top-right relative coordinates); (2) black screens (triggering 10-second re-detection cycles); and (3) background app termination (executed via edge-directed swipe vectors). The framework implements interrupt-driven workflow management, where exception resolution systematically precedes primary task progression to maintain environmental control stability.
+
+
+
+
+
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.94\linewidth]{appendix/figure9_visual.pdf} % 调整图形宽度为当前列宽的80%
+\caption{Game Scenario Case Visualization.}
+\label{fig8:visual}
+\end{figure*}
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width=0.94\linewidth]{appendix/figure8_visual.pdf} % 调整图形宽度为当前列宽的80%
+\caption{General Scenario Case Visualization.}
+\label{fig9:visual}
+\end{figure*}
+
+
+
+\section{Qualitative Analysis}
+\label{sec:Qualitative}
+
+
+
+\subsection{Error Correction Visualization}
+\label{sec:Case_Visualization}
+As illustrated in Figure~\ref{fig7:callback}, this sequence captures a critical error-recovery episode in our LongHorizonUI automation framework: The agent erroneously selected the adjacent ``Guild" button instead of the target ``Delegate" function, triggering an unintended guild management interface. Diagnostic self-assessment attributed this failure to positional deviation and visual occlusion interference within the GUI layout. To contain error propagation, the recovery protocol first activated a rollback mechanism by clicking the back arrow (Index 1) to restore the baseline interface, followed by a precision-targeted secondary click using relative coordinates [N, 0.5, 0.8] within the Delegate button's highlight region, successfully rectifying the initial localization inaccuracy. This case demonstrates LongHorizonUI's operational efficacy and robustness in handling real-world automation exceptions.
+
+
+
+
+\subsection{Case Visualization}
+\label{sec:Case_Visualization}
+To demonstrate LongHorizonUI's advantage in long-horizon reasoning, we visualize its task execution trajectories in both general scenarios (Figure~\ref{fig8:visual})and gaming environments (Figure~\ref{fig9:visual}). In universal settings, the architecture exhibits strong task generalization via its compensatory action executor, which dynamically adjusts interaction pathways when encountering heterogeneous UI elements (e.g., switching between gesture controls and traditional input fields) while maintaining task coherence. The deep-reflective decider further ensures minimal end-to-end error propagation by verifying stepwise contextual consistency, effectively mitigating cascading failures common in baselines. Within gaming scenarios, the agent leverages enhanced perceptual signals and compensatory action strategies to traverse nested menus and execute multi-step operations under real-time constraints, even during interface mutations.
+
+
+
+
+
+\section{Additional Discussions}
+\label{sec:discussion}
+
+The pursuit of robust long-horizon GUI agents necessitates addressing two critical challenges: adaptive long-horizon modeling and dynamic interrupt handling (e.g., pop-ups). For extended task sequences, future work could integrate reinforcement learning with hierarchical state representations to compress historical trajectories into abstract milestones, mitigating error accumulation while preserving contextual coherence. For dynamic interrupts (e.g., pop-ups), a predictive-reactive hybrid mechanism is essential: real-time environmental monitoring detects anomalies, triggering tiered fallbacks such as emergency rollbacks, LLM-guided diagnostics.
+
+
+\end{document}
