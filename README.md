@@ -128,7 +128,7 @@ python run.py offline \
   --model gemini-2.5-pro
 ```
 
-```
+
 
 ### Common Parameters
 
