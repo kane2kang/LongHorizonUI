@@ -71,7 +71,7 @@ After downloading, place the data under the `data/` directory:
 ```
 data/
 ├── general/          # General application scenarios
-│   ├── qq/
+│   ├── app_a/
 │   │   ├── task_001/
 │   │   │   ├── screenshot/     # UI screenshot sequences
 │   │   │   │   ├── 001.png
@@ -79,7 +79,7 @@ data/
 │   │   │   │   └── ...
 │   │   │   └── task_infos.json # Task description and annotations
 │   │   └── ...
-│   ├── qq_mail/
+│   ├── app_b/
 │   └── ...
 └── game/             # Game application scenarios
     ├── hero/
@@ -90,7 +90,7 @@ data/
 
 ```json
 {
-  "task_name": "Create a new email in QQ Mail and send it to a contact",
+  "task_name": "Create a new email in a mail app and send it to a contact",
   "task_steps": [
     {"action": "Click the menu button in the top-left corner"},
     {"action": "Select the compose email option"},
@@ -115,14 +115,14 @@ data/
 ```bash
 # Low instruction mode (detailed step-by-step instructions provided)
 python run.py offline \
-  --data_dir data/general/qq \
+  --data_dir data/general/app_a \
   --instruction_level low \
   --provider gemini \
   --model gemini-2.5-pro
 
 # High instruction mode (only task description provided, agent plans autonomously)
 python run.py offline \
-  --data_dir data/game/hero \
+  --data_dir data/game/game_a \
   --instruction_level high \
   --provider gemini \
   --model gemini-2.5-pro
@@ -144,7 +144,7 @@ python run.py live \
 
 # Load task from file
 python run.py live \
-  --task_file data/general/qq/task_001/task_infos.json \
+  --task_file data/general/app_a/task_001/task_infos.json \
   --provider gemini \
   --model gemini-2.5-pro
 

@@ -88,8 +88,8 @@ class OpenAppAction(BaseModel):
     """Parameters for application launch operation"""
     app_identifier: str = Field(
         ...,
-        description="Unique application identifier: package name (e.g., com.tencent.mm) or main activity name (e.g., com.tencent.mm.ui.LauncherUI)",
-        example="com.tencent.mm"
+        description="Unique application identifier: package name (e.g., com.example.app) or main activity name (e.g., com.example.app.ui.LauncherUI)",
+        example="com.example.app"
     )
     launch_args: Optional[dict] = Field(
         None,

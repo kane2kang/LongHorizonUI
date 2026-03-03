@@ -33,14 +33,14 @@ def test_record_to_simple_steps():
     # MODEL = "gpt-4o"
     # llm = llm_provider.LLMProvider(llm_provider="azure_openai", model=MODEL, base_url=AZURE_OPENAI_ENDPOINT,
     #                                api_key=AZURE_OPENAI_API_KEY)
-    main_dir = "data/mdnf_raw"
+    main_dir = "data/sample_raw"
     # 多应用场景
     # app_scenarios = [
-    #     "data/general/qq",
-    #     "data/general/qq_mail",
-    #     "data/general/qq_music",
-    #     "data/general/tencent_meeting"
-    #     "data/general/weixin_new"
+    #     "data/general/app_a",
+    #     "data/general/app_b",
+    #     "data/general/app_c",
+    #     "data/general/app_d"
+    #     "data/general/app_e"
     #     # "data/general/gmail",
     # ]
     # for main_dir in app_scenarios:
@@ -83,16 +83,16 @@ def test_android_auto_exec_agent():
 
     # model = "gemini-2.0-flash"
     genreal_scenarios = {
-        "qq": "data/general/qq",
-        "qq_mail": "data/general/qq_mail",
-        "qq_music": "data/general/qq_music",
-        "tencent_meeting": "data/general/tencent_meeting",
-        "weixin_new": "data/general/weixin_new",
-        "qq_browser": "data/general/qq_browser",
-        "tencent_manager": "data/general/tencent_manager",
-        "tencent_video": "data/general/tencent_video",
-        "tencent_document": "data/general/tencent_document",
-        "weishi": "data/general/weishi"
+        "app_a": "data/general/app_a",
+        "app_b": "data/general/app_b",
+        "app_c": "data/general/app_c",
+        "app_d": "data/general/app_d",
+        "app_e": "data/general/app_e",
+        "app_f": "data/general/app_f",
+        "app_g": "data/general/app_g",
+        "app_h": "data/general/app_h",
+        "app_i": "data/general/app_i",
+        "app_j": "data/general/app_j"
     }
 
     model = "gemini-2.5-pro"
