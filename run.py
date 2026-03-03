@@ -19,69 +19,49 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from LonghorizonAgent.common import llm_provider
+from LonghorizonAgent.agent.auto_execution_agent import AutoExecutionAgent, AutoExecutionConfig
+from LonghorizonAgent.system.android_context import AndroidContext, AndroidContextConfig
+from LonghorizonAgent.controller.android_controller import AndroidController
+from LonghorizonAgent.prompts.auto_execution_prompt import AndroidExecSystemPrompt, AutoExecAgentPrompt
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
 logger = logging.getLogger("LongHorizonUI")
-
-
-def _lazy_imports():
-    """Lazy import to avoid ModuleNotFoundError when dependencies are not installed."""
-    from LonghorizonAgent.common import llm_provider
-    from LonghorizonAgent.agent.auto_execution_agent import AutoExecutionAgent, AutoExecutionConfig
-    from LonghorizonAgent.system.android_context import AndroidContext, AndroidContextConfig
-    from LonghorizonAgent.controller.android_controller import AndroidController
-    from LonghorizonAgent.prompts.auto_execution_prompt import AndroidExecSystemPrompt, AutoExecAgentPrompt
-    return {
-        "llm_provider": llm_provider,
-        "AutoExecutionAgent": AutoExecutionAgent,
-        "AutoExecutionConfig": AutoExecutionConfig,
-        "AndroidContext": AndroidContext,
-        "AndroidContextConfig": AndroidContextConfig,
-        "AndroidController": AndroidController,
-        "AndroidExecSystemPrompt": AndroidExecSystemPrompt,
-        "AutoExecAgentPrompt": AutoExecAgentPrompt,
-    }
-
-
-_modules = None
-
-
-def _get_modules():
-    global _modules
-    if _modules is None:
-        _modules = _lazy_imports()
-    return _modules
 
 
 # ─────────────────────────────────────────
 # LLM 初始化
 # ─────────────────────────────────────────
-def init_llm(provider: str, model: str):
-    """Initialize LLM client based on provider name."""
-    m = _get_modules()
-    llm_mod = m["llm_provider"]
+def init_llm(provider: str, model: str) -> llm_provider.LLMProvider:
+    """根据 provider 名称初始化 LLM 客户端。"""
     if provider == "gemini":
         project = os.getenv("GOOGLE_PROJECT", "")
         location = os.getenv("GOOGLE_LOCATION", "")
-        return llm_mod.LLMProvider(
+        google_key_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+        # 如果是相对路径，转为基于项目根目录的绝对路径
+        if google_key_path and not os.path.isabs(google_key_path):
+            google_key_path = str(Path(__file__).resolve().parent / google_key_path)
+        return llm_provider.LLMProvider(
             llm_provider="gemini", model=model,
-            project=project, location=location
+            project=project, location=location,
+            google_key_json_path=google_key_path if google_key_path else None
         )
     elif provider == "azure_openai":
         endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
         api_key = os.getenv("AZURE_OPENAI_API_KEY", "")
-        return llm_mod.LLMProvider(
+        return llm_provider.LLMProvider(
             llm_provider="azure_openai", model=model,
             base_url=endpoint, api_key=api_key
         )
     elif provider == "openai":
         endpoint = os.getenv("OPENAI_ENDPOINT", "")
         api_key = os.getenv("OPENAI_API_KEY", "")
-        return llm_mod.LLMProvider(
+        return llm_provider.LLMProvider(
             llm_provider="openai", model=model,
             base_url=endpoint, api_key=api_key
         )
     else:
-        raise ValueError(f"Unsupported LLM provider: {provider}, options: gemini / azure_openai / openai")
+        raise ValueError(f"不支持的 LLM provider: {provider}，可选: gemini / azure_openai / openai")
 
 
 # ─────────────────────────────────────────
@@ -126,16 +106,7 @@ def load_task(task_dir: Path, instruction_level: str):
 # 模式 1: Offline — 基于本地截图模拟执行
 # ─────────────────────────────────────────
 def run_offline(args):
-    """Offline mode: simulate execution based on local screenshot sequences."""
-    m = _get_modules()
-    AndroidContextConfig = m["AndroidContextConfig"]
-    AndroidContext = m["AndroidContext"]
-    AndroidController = m["AndroidController"]
-    AutoExecutionConfig = m["AutoExecutionConfig"]
-    AutoExecutionAgent = m["AutoExecutionAgent"]
-    AndroidExecSystemPrompt = m["AndroidExecSystemPrompt"]
-    AutoExecAgentPrompt = m["AutoExecAgentPrompt"]
-
+    """基于本地截图序列的模拟执行模式。"""
     llm = init_llm(args.provider, args.model)
     data_root = Path(args.data_dir)
 
@@ -229,16 +200,8 @@ def run_offline(args):
 # 模式 2: Live — USB 连接真实设备执行
 # ─────────────────────────────────────────
 def run_live(args):
-    """Live mode: execute on real Android device via USB."""
+    """通过 USB 连接真实 Android 设备的执行模式。"""
     import adbutils
-    m = _get_modules()
-    AndroidContextConfig = m["AndroidContextConfig"]
-    AndroidContext = m["AndroidContext"]
-    AndroidController = m["AndroidController"]
-    AutoExecutionConfig = m["AutoExecutionConfig"]
-    AutoExecutionAgent = m["AutoExecutionAgent"]
-    AndroidExecSystemPrompt = m["AndroidExecSystemPrompt"]
-    AutoExecAgentPrompt = m["AutoExecAgentPrompt"]
 
     llm = init_llm(args.provider, args.model)
 

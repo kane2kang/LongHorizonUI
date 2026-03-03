@@ -25,7 +25,7 @@ LongHorizonUI is an agent framework designed for **long-horizon GUI automation t
 | **Compensating Action Executor (CAE)** | Three-level fallback strategy (Index → Relative → Absolute+ε), post-execution verification, progress monitoring, and automatic rollback |
 
 <p align="center">
-  <img src="webui/figure/overview.png" width="90%" alt="Framework Overview">
+  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/overview.png" width="90%" alt="Framework Overview">
 </p>
 
 
@@ -177,7 +177,7 @@ python run.py live \
 On our self-constructed LongGUIBench, LongHorizonUI significantly outperforms existing methods across both general and game long-horizon scenarios.
 
 <p align="center">
-  <img src="webui/figure/longbench.png" width="85%" alt="LongGUIBench Results">
+  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/longbench.png" width="85%" alt="LongGUIBench Results">
 </p>
 
 ### ScreenSpot
@@ -185,7 +185,7 @@ On our self-constructed LongGUIBench, LongHorizonUI significantly outperforms ex
 On the ScreenSpot cross-platform UI grounding benchmark, LongHorizonUI surpasses previous state-of-the-art methods, validating the effectiveness of the IoU semantic binding strategy in the enhanced perception module.
 
 <p align="center">
-  <img src="webui/figure/screenspot.png" width="85%" alt="ScreenSpot Results">
+  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/screenspot.png" width="85%" alt="ScreenSpot Results">
 </p>
 
 ---

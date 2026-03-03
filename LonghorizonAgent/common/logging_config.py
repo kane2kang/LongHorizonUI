@@ -2,13 +2,14 @@ import logging
 import os
 import sys
 
-# 尝试加载 .env 环境变量（python-dotenv 为可选依赖）
-try:
-    from dotenv import load_dotenv
-    if os.path.exists(".env"):
-        load_dotenv()
-except ImportError:
-    pass  # python-dotenv 未安装时跳过，用户需手动设置环境变量
+from dotenv import load_dotenv
+
+if os.path.exists(".env"):
+    load_dotenv()
+else:
+    from LonghorizonAgent.common import utils
+
+    utils.load_env_from_encrypted_file(".env.encrypted")
 
 
 def addLoggingLevel(levelName, levelNum, methodName=None):
