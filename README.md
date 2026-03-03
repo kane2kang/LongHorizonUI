@@ -128,32 +128,6 @@ python run.py offline \
   --model gemini-2.5-pro
 ```
 
-### Mode 2: Live (USB-Connected Device Execution)
-
-Connects to a real Android device via USB. The agent captures screenshots, perceives, decides, and controls the device in real time.
-
-**Prerequisites:**
-- USB debugging is enabled on the Android device
-- `adb devices` can detect the device
-
-```bash
-# Interactive task input
-python run.py live \
-  --provider gemini \
-  --model gemini-2.5-pro
-
-# Load task from file
-python run.py live \
-  --task_file data/general/app_a/task_001/task_infos.json \
-  --provider gemini \
-  --model gemini-2.5-pro
-
-# Specify task directly (High mode)
-python run.py live \
-  --task "Open Settings and connect to a WiFi network" \
-  --instruction_level high \
-  --provider gemini \
-  --model gemini-2.5-pro
 ```
 
 ### Common Parameters
