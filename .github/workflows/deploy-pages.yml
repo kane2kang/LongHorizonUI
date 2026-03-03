@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'page/**'
+      - 'page/index.html'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -26,21 +26,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Pull LFS files
-        run: git lfs pull
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p _site
+          cp page/index.html _site/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'page'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
