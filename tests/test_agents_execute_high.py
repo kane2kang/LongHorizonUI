@@ -30,36 +30,36 @@ def test_android_auto_exec_agent(execution_mode="high"):
 
     # # 多场景定义
     # genreal_scenarios = {
-    #     "qq": "data/general/qq",
-    #     "qq_mail": "data/general/qq_mail",
-    #     "qq_music": "data/general/qq_music",
-    #     "tencent_meeting": "data/general/tencent_meeting",
-    #     "weixin_new": "data/general/weixin_new",
-    #     "qq_browser": "data/general/qq_browser",
-    #     "tencent_manager": "data/general/tencent_manager",
-    #     "tencent_video": "data/general/tencent_video",
-    #     "tencent_document": "data/general/tencent_document",
-    #     "weishi": "data/general/weishi"
+    #     "app_a": "data/general/app_a",
+    #     "app_b": "data/general/app_b",
+    #     "app_c": "data/general/app_c",
+    #     "app_d": "data/general/app_d",
+    #     "app_e": "data/general/app_e",
+    #     "app_f": "data/general/app_f",
+    #     "app_g": "data/general/app_g",
+    #     "app_h": "data/general/app_h",
+    #     "app_i": "data/general/app_i",
+    #     "app_j": "data/general/app_j"
     # }
 
     game_scenarios = {
-        "DNF": "data/game/hero",
-        # "Happy_Landlord": "data/game/Happy_Landlord",
-        # "hero": "data/game/hero",
-        # "honor_kings": "data/game/honor_kings",
-        # "huoying": "data/game/huoying",
-        # "jinchanchan": "data/game/jinchanchan",
-        # "League_of_Legends": "data/game/League_of_Legends",
-        # "Peaceful_Elite": "data/game/Peaceful_Elite",
-        # "QQFlyCar": "data/game/QQFlyCar",
-        # "sanjiaozhou": "data/game/sanjiaozhou",
-        # "yuanmeng": "data/game/yuanmeng"
+        "game_a": "data/game/hero",
+        # "game_b": "data/game/game_b",
+        # "game_c": "data/game/game_c",
+        # "game_d": "data/game/game_d",
+        # "game_e": "data/game/game_e",
+        # "game_f": "data/game/game_f",
+        # "game_g": "data/game/game_g",
+        # "game_h": "data/game/game_h",
+        # "game_i": "data/game/game_i",
+        # "game_j": "data/game/game_j",
+        # "game_k": "data/game/game_k"
     }
 
-    # model = "gemini-2.0-flash"
-    model = "gemini-2.5-pro"
-    project = os.getenv("GOOGLE_PROJECT", "")
-    location = os.getenv("GOOGLE_LOCATION", "")
+    # model = "<your-model-variant>"
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    project = os.getenv("LLM_PROJECT", "")
+    location = os.getenv("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location)
     output_base_dir = Path("./tmp/agent_outputs_high")  # 修改输出目录
 

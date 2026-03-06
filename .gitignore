@@ -1,0 +1,80 @@
+# 环境与密钥（绝不提交）
+.env
+.env.*
+*.json
+!package.json
+!tsconfig.json
+assets/google_keys/
+assets/keys/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 临时文件与输出
+tmp/
+results/
+checkpoints/
+vis_fig/
+*.zip
+
+# 系统文件
+.DS_Store
+Thumbs.db
+nul
+
+# 调试/临时脚本
+_test_single_case.py
+_check_syntax.py
+test.py
+
+# 构建/发布脚本（含内部路径）
+scripts/
+release/
+
+# 大文件
+*.jar
+*.apk
+*.ipa
+
+# 数据目录（大文件，通过LFS或单独管理）
+data/general*/
+data/game*/
+data/android_control/
+data/google_keys/
+data/icon_templates/
+data/examples/
+data/mdnf*
+
+# 宣传文档（非代码）
+page/*.docx
+page/*.pdf
+page/_debug_output.html
+page/check_deps.py
+page/find_fonts.py
+page/fix_authors.py
+page/fix_page.py
+page/md2docx.py
+page/md2pdf.py
+page/nul
+
+# webui（如果需要单独管理）
+webui/

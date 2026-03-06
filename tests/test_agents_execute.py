@@ -22,15 +22,15 @@ def test_record_to_simple_steps():
     from LonghorizonAgent.memory.operation_graph import OperationGraph
     import os
 
-    model = "gemini-2.5-pro-preview-05-06"
-    # model = "gemini-2.0-flash"
-    project = os.getenv("GOOGLE_PROJECT", "")
-    location = os.getenv("GOOGLE_LOCATION", "")
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    # model = "<your-model-variant>"
+    project = os.getenv("LLM_PROJECT", "")
+    location = os.getenv("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location)
 
     # AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
     # AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-    # MODEL = "gpt-4o"
+    # MODEL = os.getenv("LLM_MODEL", "gpt-4o")
     # llm = llm_provider.LLMProvider(llm_provider="azure_openai", model=MODEL, base_url=AZURE_OPENAI_ENDPOINT,
     #                                api_key=AZURE_OPENAI_API_KEY)
     main_dir = "data/sample_raw"
@@ -95,15 +95,15 @@ def test_android_auto_exec_agent():
         "app_j": "data/general/app_j"
     }
 
-    model = "gemini-2.5-pro"
-    project = os.getenv("GOOGLE_PROJECT", "")
-    location = os.getenv("GOOGLE_LOCATION", "")
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    project = os.getenv("LLM_PROJECT", "")
+    location = os.getenv("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location)
 
-    # # model = "GPT-4o"
+    # # model = "<your-model>"
     # AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
     # AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-    # MODEL = "gpt-4o"
+    # MODEL = os.getenv("LLM_MODEL", "gpt-4o")
     # llm = llm_provider.LLMProvider(llm_provider="azure_openai", model=MODEL, base_url=AZURE_OPENAI_ENDPOINT,
     #                                api_key=AZURE_OPENAI_API_KEY)
 

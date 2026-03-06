@@ -191,7 +191,7 @@ class LLMProvider:
     def _init_gemini_client(self, google_key_json_path, project, location):
         """Initializes the Google Generative AI client, preferring Vertex AI."""
         credentials = None
-        effective_key_path = google_key_json_path or os.getenv("GOOGLE_API_KEY_JSON")
+        effective_key_path = google_key_json_path or os.getenv("LLM_API_KEY_JSON")
 
         if effective_key_path and os.path.exists(effective_key_path):
             try:

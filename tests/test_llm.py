@@ -21,7 +21,7 @@ def test_openai_api():
 
     OPENAI_ENDPOINT = os.getenv("OPENAI_ENDPOINT", "")
     OPENAI_KEY = os.getenv("OPENAI_KEY", "")
-    MODEL = "gpt-4o"
+    MODEL = os.getenv("LLM_MODEL", "gpt-4o")
 
     llm = llm_provider.LLMProvider(llm_provider="openai", model=MODEL, base_url=OPENAI_ENDPOINT, api_key=OPENAI_KEY)
 
@@ -51,7 +51,8 @@ def test_azure_openai_api():
 
     AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
     AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-    MODEL = "gpt-4o"
+    MODEL = os.getenv("LLM_MODEL", "gpt-4o")
+    MODEL = os.getenv("LLM_MODEL", "gpt-4o")
 
     llm = llm_provider.LLMProvider(llm_provider="azure_openai", model=MODEL, base_url=AZURE_OPENAI_ENDPOINT,
                                    api_key=AZURE_OPENAI_API_KEY)
@@ -82,7 +83,7 @@ def test_qwen_api():
 
     OPENAI_ENDPOINT = os.getenv("DASHSCOPE_ENDPOINT", "")
     OPENAI_KEY = os.getenv("DASHSCOPE_API_KEY", "")
-    MODEL = "qwen-vl-max"
+    MODEL = os.getenv("LLM_MODEL", "qwen-vl-max")
 
     llm = llm_provider.LLMProvider(llm_provider="openai", model=MODEL, base_url=OPENAI_ENDPOINT, api_key=OPENAI_KEY)
 
@@ -109,15 +110,15 @@ def test_gemini_api():
     # pip install --upgrade google-genai
     # gcloud auth application-default login
 
-    # model = "gemini-2.0-flash"
-    model = "gemini-2.5-pro-preview-05-06"
-    project = os.environ.get("GOOGLE_PROJECT", "")
-    location = os.environ.get("GOOGLE_LOCATION", "")
+    # model = "<your-model-variant>"
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    project = os.environ.get("LLM_PROJECT", "")
+    location = os.environ.get("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location)
 
     chat_messages = []
     chat_messages = llm.add_message("system", "you are a helpful AI assistant.", chat_messages)
-    image_path = "data/examples/dnf.png"
+    image_path = "data/examples/image.png"
     prompt = """
             Please provide a detailed description of the following game screenshot: Include all visible text, icons present, 
             and the information conveyed by each icon. Additionally, identify which page or screen of the game 
@@ -137,11 +138,11 @@ def test_llm_to_detect_box():
     import os
     import cv2
 
-    model = "gemini-2.5-pro-preview-05-06"
-    # model = "gemini-2.0-flash"
-    google_key_json_path = "./assets/google_keys/turinglab-507d7c079329.json"
-    project = os.environ.get("GOOGLE_PROJECT", "")
-    location = os.environ.get("GOOGLE_LOCATION", "")
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    # model = "<your-model-variant>"
+    google_key_json_path = os.getenv("LLM_KEY_PATH", "")
+    project = os.environ.get("LLM_PROJECT", "")
+    location = os.environ.get("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location,
                                    google_key_json_path=google_key_json_path)
 
@@ -267,11 +268,11 @@ def test_llm_to_detect_box_with_hints():
     import os
     import cv2
 
-    # model = "gemini-2.5-pro-preview-05-06"
-    # # model = "gemini-2.0-flash"
-    # google_key_json_path = "./assets/google_keys/turinglab-507d7c079329.json"
-    # project = os.environ.get("GOOGLE_PROJECT", "")
-    # location = os.environ.get("GOOGLE_LOCATION", "")
+    # model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    # # model = "<your-model-variant>"
+    # google_key_json_path = os.getenv("LLM_KEY_PATH", "")
+    # project = os.environ.get("LLM_PROJECT", "")
+    # location = os.environ.get("LLM_LOCATION", "")
     # llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location,
     #                                google_key_json_path=google_key_json_path)
 
@@ -432,11 +433,11 @@ def test_llm_to_detect_center():
     import os
     import cv2
 
-    model = "gemini-2.5-pro-preview-05-06"
-    # model = "gemini-2.0-flash"
-    google_key_json_path = "./assets/google_keys/turinglab-507d7c079329.json"
-    project = os.environ.get("GOOGLE_PROJECT", "")
-    location = os.environ.get("GOOGLE_LOCATION", "")
+    model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    # model = "<your-model-variant>"
+    google_key_json_path = os.getenv("LLM_KEY_PATH", "")
+    project = os.environ.get("LLM_PROJECT", "")
+    location = os.environ.get("LLM_LOCATION", "")
     llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location,
                                    google_key_json_path=google_key_json_path)
 
@@ -543,11 +544,11 @@ def test_llm_api_grid():
     import os
     import cv2
 
-    # model = "gemini-2.5-pro-preview-05-06"
-    # # model = "gemini-2.0-flash"
-    # google_key_json_path = "./assets/google_keys/turinglab-507d7c079329.json"
-    # project = os.environ.get("GOOGLE_PROJECT", "")
-    # location = os.environ.get("GOOGLE_LOCATION", "")
+    # model = os.getenv("LLM_MODEL", "gemini-2.5-pro")
+    # # model = "<your-model-variant>"
+    # google_key_json_path = os.getenv("LLM_KEY_PATH", "")
+    # project = os.environ.get("LLM_PROJECT", "")
+    # location = os.environ.get("LLM_LOCATION", "")
     # llm = llm_provider.LLMProvider(llm_provider="gemini", model=model, project=project, location=location,
     #                                google_key_json_path=google_key_json_path)
 

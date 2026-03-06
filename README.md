@@ -5,8 +5,8 @@
 **A Long-Horizon GUI Automation Agent Framework with Enhanced Perception, Deep Reflection, and Compensating Execution**
 
 <p>
-  <a href="https://huggingface.co/datasets/KaneKang/LonghorizonUI"><img src="https://img.shields.io/badge/🤗 Dataset-LongGUIBench-yellow" alt="Dataset"></a>
-  <a href="https://openreview.net/pdf?id=BK7Mk5d4WE"><img src="https://img.shields.io/badge/Paper-OpenReview-red" alt="Paper"></a>
+  <a href="#"><img src="https://img.shields.io/badge/🤗 Dataset-LongGUIBench-yellow" alt="Dataset"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Paper-Conference-red" alt="Paper"></a>
   <a href="#"><img src="https://img.shields.io/badge/License-Apache%202.0-blue" alt="License"></a>
 </p>
 
@@ -25,7 +25,7 @@ LongHorizonUI is an agent framework designed for **long-horizon GUI automation t
 | **Compensating Action Executor (CAE)** | Three-level fallback strategy (Index → Relative → Absolute+ε), post-execution verification, progress monitoring, and automatic rollback |
 
 <p align="center">
-  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/overview.png" width="90%" alt="Framework Overview">
+  <img src="page/figure/overview.png" width="90%" alt="Framework Overview">
 </p>
 
 
@@ -38,7 +38,7 @@ LongHorizonUI is an agent framework designed for **long-horizon GUI automation t
 
 ```bash
 # Clone the repository
-git clone https://github.com/kane2kang/LongHorizonUI.git
+git clone <your-repo-url>
 cd LongHorizonUI
 
 # Install dependencies
@@ -56,7 +56,7 @@ cp .env.example .env
 
 | Provider | Required Environment Variables |
 |----------|-------------------------------|
-| Google Gemini (Recommended) | `GOOGLE_PROJECT`, `GOOGLE_LOCATION` |
+| Gemini (Recommended) | `LLM_PROJECT`, `LLM_LOCATION` |
 | Azure OpenAI | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY` |
 | OpenAI | `OPENAI_ENDPOINT`, `OPENAI_API_KEY` |
 
@@ -64,7 +64,7 @@ cp .env.example .env
 
 We provide the **LongGUIBench** benchmark dataset for evaluation:
 
-🤗 **[LongGUIBench on Hugging Face](https://huggingface.co/datasets/KaneKang/LonghorizonUI)**
+🤗 **[LongGUIBench Dataset](#)** (link available upon publication)
 
 After downloading, place the data under the `data/` directory:
 
@@ -151,7 +151,7 @@ python run.py offline \
 On our self-constructed LongGUIBench, LongHorizonUI significantly outperforms existing methods across both general and game long-horizon scenarios.
 
 <p align="center">
-  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/longbench.png" width="85%" alt="LongGUIBench Results">
+  <img src="page/figure/longbench.png" width="85%" alt="LongGUIBench Results">
 </p>
 
 ### ScreenSpot
@@ -159,7 +159,7 @@ On our self-constructed LongGUIBench, LongHorizonUI significantly outperforms ex
 On the ScreenSpot cross-platform UI grounding benchmark, LongHorizonUI surpasses previous state-of-the-art methods, validating the effectiveness of the IoU semantic binding strategy in the enhanced perception module.
 
 <p align="center">
-  <img src="https://media.githubusercontent.com/media/kane2kang/LongHorizonUI/main/page/figure/screenspot.png" width="85%" alt="ScreenSpot Results">
+  <img src="page/figure/screenspot.png" width="85%" alt="ScreenSpot Results">
 </p>
 
 ---
@@ -173,9 +173,9 @@ If this project is helpful for your research, please cite:
 @inproceedings{anonymous2026longhorizonui,
   title={LongHorizon{UI}: A Unified Framework for Robust long-horizon Task Automation of {GUI} Agent},
   author={Anonymous},
-  booktitle={The Fourteenth International Conference on Learning Representations},
+  booktitle={Conference on Learning Representations},
   year={2026},
-  url={https://openreview.net/forum?id=BK7Mk5d4WE}
+  url={#}
 }
 ```
 

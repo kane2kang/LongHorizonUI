@@ -11,7 +11,7 @@ def test_draw():
 
     from LonghorizonAgent.common import utils
 
-    image_path = "./tmp/screenshots/android_2NSDU20827006542/8bebb893-ce0a-46cd-b1fa-074bd20742db.png"
+    image_path = "./tmp/screenshots/android_device/8bebb893-ce0a-46cd-b1fa-074bd20742db.png"
     image = cv2.imread(image_path)
 
     image_draw = utils.add_grid_with_numbers(image, font_path="assets/fonts/arial.ttf", grid_num=16)
