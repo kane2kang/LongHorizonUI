@@ -23,11 +23,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Prepare deploy directory
         run: |
           mkdir -p _site
           cp page/index.html _site/index.html
+          cp -r page/figure _site/figure
+          cp -r page/demo _site/demo
+          cp -r page/data_samples _site/data_samples
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
